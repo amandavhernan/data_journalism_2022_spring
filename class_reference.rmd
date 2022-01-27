@@ -18,3 +18,10 @@ knitr::opts_chunk$set(echo = TRUE)
 ## Introduction
 
 Consider this my personal guide to the commands and functions you will learn. In general, when you come across an R command or function that you want to remember, put it in here along with a description of what it does and when you'd use it.
+
+## Installing/loading packages
+install.packages()
+library()
+
+## Arrange data
+arrange(desc(x)) -> sorts in descending order

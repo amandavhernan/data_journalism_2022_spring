@@ -1,7 +1,7 @@
 ---
 title: "lab_01"
-author: "sean mussenden"
-date: "8/19/2021"
+author: "Amanda Hernandez"
+date: "1/27/22"
 output: html_document
 ---
 
@@ -47,7 +47,7 @@ wv_ppp_loans <- read_rds("lab_01.rds")
 
 **Task** Run the codeblock below to use glimpse to get a sense of the column names, types and sample data.
 **Q1** How many rows and columns does this dataframe have?
-**A1** [write your answer here]
+**A1** This dataframe has 33,336 rows and 58 columns.
 
 ```{r}
 glimpse(wv_ppp_loans)
@@ -58,33 +58,49 @@ glimpse(wv_ppp_loans)
 Use the pre-lab and your reference notebook as examples.
 
 **Q2** Which West Virginia county got the most loans? How many?
-**A2** [write your answer here]
+**A2** Kanawha County received the most loans,receiving 4,273 loans.
 
 ```{r}
 # Write the code to produce your answer here
+wv_ppp_loans %>%
+  group_by(project_county_name) %>%
+  summarise(
+    count_loans = n()
+  ) %>%
+  arrange(desc(count_loans))
 
 ```
 **Q3** Which West Virginia county got the fewest loans? How many?
-**A3** [write your answer here]
+**A3** Wirt County received the fewest number of loans, receiving 36 loans. 
 
 ```{r}
 # Write the code to produce your answer here
+wv_ppp_loans %>%
+  group_by(project_county_name) %>%
+  summarise(
+    count_loans = n()
+  ) %>%
+  arrange((count_loans))
 
 ```
 **Q4** What's your best educated guess to explain why the county identified in question 2 had a lot of loans and why the county identified in question 3 had only a few loans? Hint: you won't find the answer in the data, you'll need to do some quick web research. You do not need to write any code for this question, so no codeblock is provided.  
-**A4** [write your answer here]
-
+**A4** My guess is that Kanawha County received the largest number of loans because it's the state's most populous county and the state capital, Charleston, is there. Wirt County, on the other hand, has a much smaller population in comparison.
 
 **Q5** What West Virginia business got the state's largest PPP loan? How much was it for? What does the business do? How many jobs did the loan retain, according to the data?
-**A5** [write your answer here]
+**A5** The Greenbrier Hotel Corporation received the state's largest PPP loan for $8,912,202. This business is behind The Greenbrier, a luxury resort/hotel. According to the data, the loan helped the business retain 500 jobs.
 
 ```{r}
 # Write the code to produce your answer here
+wv_ppp_loans %>%
+  arrange(desc(amount))
 
 ```
 
 **Q6** What West Virginia politician (with his family) owns the company identified in question 5? What's your source for that information? Hint: this will require web research, you won't be able to answer this purely from the data set.  You do not need to write any code for this question, so no codeblock is provided.  
-**A6** [write your answer here]
+**A6** Jim Justice, the state's governor, owns the Greenbrier Hotel Corporation. After looking up the owner of the business, I found that the parent organization is the Justice Family Group. Then, I found a ProPublica article about the resort and its owner, Jim Justice. Then, I cross referenced this information with the governor's website where I could confirm it.
+
+ProPublica article: https://www.propublica.org/article/west-virginia-greenbrier-governor-jim-justice-little-trump
+Governor's website: https://governor.wv.gov/about/Pages/default.aspx
 
 **Q7**. Produce a summary table that has the following information for West Virginia as a whole (the whole state, not by county):
 * count of loans
@@ -96,7 +112,19 @@ Use the pre-lab and your reference notebook as examples.
 
 Store it as a variable object called `wv_summary` so that you can examine it with the data viewer. What newsworthy nuggets jump out at you that you could imagine dropping into a news story? Write a few summary sentences with overall findings.
 
-**A7** [write your answer here]
+**A7** If I were writing a story using these summary statistics, I would probably use all of the statistics with the exception of the average loan amount because it's likely that influential outliers are affecting the mean. It would be misleading to use in a story without thoroughly explaining that. Instead, I might draw attention to the median because it more accurately describes the data. In this case, we can see that roughly $20,832 was the most common dispersed loan amount. I would use the total amount of all loans as a way to grab a reader's attention and put the overall story into perspective for readers. I would also use the min/max values to show how different businesses took advantage of the PPP program and relate it to how many jobs they were able to retain. I'm very curious if there are any patterns there, but I would need to do additional analysis. 
+
 ```{r}
 # Write the code to produce your answer here
+wv_summary <- wv_ppp_loans %>%
+    group_by(state) %>%
+    summarise(
+      count_loans = n(),
+      total_loans_amount = sum(amount),
+      mean_loan_amount = mean(amount),
+      median_loan_amount = median(amount),
+      min_loan_amount = min(amount),
+      max_loan_amount = max(amount)
+        ) %>%
+          arrange(desc(max_loan_amount))
 ```

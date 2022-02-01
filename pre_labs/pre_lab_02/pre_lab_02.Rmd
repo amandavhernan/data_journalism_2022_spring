@@ -1,0 +1,223 @@
+---
+title: "pre_lab_02.Rmd"
+author: "derek willis"
+date: "8/24/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Points to hit
+1. Review of first lab and questions/problems.
+2. Review GitHub
+3. Demonstration of mutate, filtering and dates
+
+### Task 1: Load libraries
+**Task** Run the following code in the gray-colored codeblock below -- not in the console -- to load the tidyverse library. To run the code, click the little green play button (left facing arrow) at the top right of the codeblock. In Rmarkdown data notebooks, we write code inside of codeblocks, and explanatory text in the white area outside of it.
+
+```{r}
+# turn off sci notation
+options(scipen=999)
+library(tidyverse)
+library(lubridate) # look up lubridate and describe its uses in your reference notebook
+```
+
+### Task 2: Load data
+**Task** Load the PPP loan dataset by running the following codeblock.
+
+```{r}
+maryland_ppp <- read_csv('data/ppp_applications_md.csv.zip')
+```
+
+### Task 3: Glimpse data
+**Task** Run the following codeblock to use head(), summary(), colnames() and glimpse() to get a sense of the data, some of the values in each field/variable/column, and the data types of each field/variable/column. Add a description of what these do to your reference notebook.
+
+```{r}
+head(maryland_ppp)
+summary(maryland_ppp)
+colnames(maryland_ppp)
+glimpse(maryland_ppp)
+```
+
+### Task 4: Mutate
+**Task** Let's add a new column based on an existing column. Run the following code to create a new column called `percent_payroll` based on a calculation using two existing columns.
+
+```{r}
+maryland_ppp %>%
+  select(loan_number, amount, payroll_proceed) %>%
+  mutate(
+  percent_payroll = payroll_proceed/amount
+)
+```
+
+### Task 5: Better percentage calculation
+**Task** Run the following code to make our new column called `percent_payroll` show a percentage instead of a decimal.
+
+```{r}
+# make it a percentage
+maryland_ppp %>%
+  select(loan_number, amount, payroll_proceed) %>%
+  mutate(
+  percent_payroll = (payroll_proceed/amount)*100
+)
+```
+
+### Task 6: Mutate with ordering
+**Task** Run the following code to order by our new column. Add a description of what this code does to your reference notebook.
+
+```{r}
+# better ordering?
+maryland_ppp %>%
+  select(loan_number, amount, payroll_proceed) %>%
+  mutate(
+  percent_payroll = (payroll_proceed/amount)*100
+)  %>% arrange(desc(percent_payroll))
+```
+What is the payroll proceeds percentage for the first result? Put your answer in the space below.
+**Answer**
+
+
+### Task 7: Mutate with ordering, part 2
+**Task** Run the following code to order by our new column, but in ascending order
+
+```{r}
+# actual better ordering
+maryland_ppp %>%
+  select(loan_number, amount, payroll_proceed) %>%
+  mutate(
+  percent_payroll = (payroll_proceed/amount)*100
+)  %>% arrange(percent_payroll, desc(amount))
+```
+What is the payroll proceeds percentage for the first result? Put your answer in the space below.
+**Answer**
+
+
+### Task 8: Create a new column using if/else
+One question you might have is whether the lenders servicing these loan applications are located in Maryland or outside. We can add a column using mutate and populate it based on the state of the lender.
+
+**Task** Run the following code to create a new column called `in_out` based on the values of `servicing_lender_state`. Add a description of what this code does to your reference notebook.
+
+```{r}
+# if/else example
+maryland_with_in_out <- maryland_ppp %>%
+  mutate(
+    in_out = if_else(
+        servicing_lender_state == 'MD', "IN", "OUT"
+      )
+  )
+```
+
+### Task 9: Create a new column using case_when
+One common use of mutate is to create a new column and then populate it based on values in an existing column. For example, if we wanted to put the values in `jobs_retained` into broader categories in a new column called `jobs_retained_category` and we have multiple categories. We can use a function called `case_when` to make that easier.
+
+**Task** Run the following code to create a new column called `jobs_retained_category` based on the values of `jobs_retained`. Add a description of what this code does to your reference notebook.
+
+```{r}
+# case_when example
+maryland_jobs_categories <- maryland_ppp %>%
+mutate(
+  jobs_retained_category = case_when(
+    jobs_retained < 10 ~ 'under_10',
+    jobs_retained >= 10 & jobs_retained < 25 ~ '10_to_25',
+    jobs_retained >= 50 & jobs_retained < 100 ~ '50_to_100',
+    jobs_retained >= 100 & jobs_retained < 250 ~ '100_to_250',
+    jobs_retained >= 250 & jobs_retained < 500 ~ '250_to_500',
+    jobs_retained == 500 ~ '500'
+  )
+)
+```
+
+There's a lot going on here, so let's unpack it. It starts out as a typical mutate statement, but like our if_else example, case_when introduces some new things. Each line is basically a filter followed by `~` and then a value for the new column for records that match that filter. Here is [more detail](https://www.sharpsightlabs.com/blog/case-when-r/) on using `case_when`.
+
+## Filters
+
+Filter is a tidyverse verb that uses criteria you supply to return a subset of the original data. Here's how it is structured:
+
+`filter(COLUMN_NAME OPERATOR CRITERIA)`
+
+Where COLUMN_NAME is any column name from your dataframe, OPERATOR is some comparison operator like == or > or < and CRITERIA is something to compare the values in COLUMN_NAME to.
+
+### Task 10: Filter by county
+**Task** Run the following code to limit our data to Prince George's County. Add a description of what this code does to your reference notebook.
+
+```{r}
+prince_georges <- maryland_ppp %>% filter(project_county_name == "PRINCE GEORGES")
+head(prince_georges)
+```
+
+### Task 11: Multiple filters - AND
+**Task** Run the following code to limit our data to Prince George's County loan applications from nonprofit organizations where the amount is larger than $150,000.
+
+```{r}
+and_prince_georges <- maryland_ppp %>% filter(project_county_name == "PRINCE GEORGES" & business_type == "Non-Profit Organization" & amount > 150000)
+
+nrow(and_prince_georges)
+```
+What is the number of applications that meet that criteria? Put your answer in the space below.
+**Answer**
+
+### Task 12: Multiple filters - OR
+**Task** Run the following code to limit our data to Prince George's County loan applications OR applications from nonprofit organizations OR where the amount is larger than $150,000.
+
+```{r}
+or_prince_georges <- maryland_ppp %>% filter(project_county_name == "PRINCE GEORGES" | business_type == "Non-Profit Organization" | amount > 150000)
+
+nrow(or_prince_georges)
+```
+What is the number of applications that meet that criteria? Put your answer in the space below.
+**Answer**
+
+
+## Dates
+The key to working with dates is that R needs to know that the column containing the date has a datatype of date (or datetime for timestamps). Regular R will guess, and the tidyverse will make a better guess.
+
+
+### Task 13: Load data using read.csv
+**Task** Run the following code to load the `ppp_maryland.csv` file, then use glimpse() to see the data type for `date_approved`. Note that we're using `read.csv`, not the tidyverse's `read_csv`:
+
+```{r}
+# using read.csv
+maryland_ppp_sample <- read.csv('data/ppp_maryland.csv')
+glimpse(maryland_ppp_sample)
+```
+What is the datatype for `date_approved` (it's just to the right of the column name)? Put your answer in the space below.
+**Answer**
+
+### Task 14: Load data using lubridate
+**Task** Run the following code to load the application data, then use glimpse() to see the data type for `date_approved`.
+
+```{r}
+lubridate_maryland_ppp <- maryland_ppp_sample %>% mutate(
+    CleanDate = ymd_hms(date_approved)
+)
+glimpse(lubridate_maryland_ppp)
+```
+What is the datatype for `date_approved` (it's just to the right of the column name)? What is the datatype for `CleanDate`?
+Put your answers in the space below.
+**Answer**
+
+
+### Task 15: Load data using read_csv
+**Task** Run the following code to load the application data, then use glimpse() to see the data type for `date_approved`.
+```{r}
+# using read_csv from the tidyverse
+maryland_ppp_sample <- read_csv('data/ppp_maryland.csv')
+glimpse(maryland_ppp_sample)
+```
+What is the datatype for `date_approved` (it's just to the right of the column name)? Put your answer in the space below.
+**Answer**
+
+### Task 16: Use mutate and lubridate to add a column called `Month` and see which month had the most applications.
+**Task** Run the following code to create a new column based on `date_approved`. Add a description of what this code does to your reference notebook.
+
+```{r}
+maryland_ppp %>%
+  mutate(Month = floor_date(date_approved, "month")) %>%
+  group_by(Month) %>%
+  summarise(total = n()) %>%
+  arrange(desc(total))
+```
+What month saw the most applications and how many? Put your answer in the space below.
+**Answer**

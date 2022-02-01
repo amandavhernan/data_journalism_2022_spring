@@ -20,8 +20,32 @@ knitr::opts_chunk$set(echo = TRUE)
 Consider this my personal guide to the commands and functions you will learn. In general, when you come across an R command or function that you want to remember, put it in here along with a description of what it does and when you'd use it.
 
 ## Installing/loading packages
+
 install.packages()
 library()
 
-## Arrange data
+## Arranging data
+
 arrange(desc(x)) -> sorts in descending order
+arrange() -> ascending order is the default
+
+## Viewing data
+
+head() -> returns first 6 rows of dataset
+summary() -> returns summary stats (mean, median, etc.)
+colnames() -> returns column names
+glimpse() -> returns dataset
+select() -> show specific columns
+
+## Mutate
+mutate() -> add new data, overwrite data
+
+## Task 6, pre-lab 02
+
+maryland_ppp %>%
+  select(loan_number, amount, payroll_proceed) %>%
+  mutate(
+  percent_payroll = (payroll_proceed/amount)*100
+)  %>% arrange(desc(percent_payroll))
+
+This code returns the selected columns loan_number, amount, and payroll_proceed. It also returns the newly created/mutated percent_payroll column. The data is arranged in descending order by the percent_payroll column. 

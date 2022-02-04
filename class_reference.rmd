@@ -40,6 +40,14 @@ select() -> show specific columns
 ## Mutate
 mutate() -> add new data, overwrite data
 
+## Operations
+less than (<)
+less than or equal to  (>=)
+greater than (>)
+greater than or equal to (>=)
+exactly equal to (==)
+not equal to (!=)
+
 ## Task 6, pre-lab 02
 
 maryland_ppp %>%

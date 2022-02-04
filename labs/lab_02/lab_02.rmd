@@ -1,7 +1,7 @@
 ---
 title: "lab_02"
-author: "derek willis"
-date: "8/24/2021"
+author: "Amanda Hernandez"
+date: "2/3/22"
 output: html_document
 ---
 
@@ -48,37 +48,60 @@ west_virginia_ppp <- read_rds("data/lab_02.rds")
 
 **Q1** Create a new column that divides the loan amounts into the following options - under_10k, 10k_50k, 50k_100k, 100k_500k, 500k_1m, 1m_plus - and calculates how many loans are in each group. How would you describe the distribution of loans in a sentence?
 Hint: You will need to use `case_when` to make this work.
-**A1** [write your answer here]
+**A1** The majority of loans (15,089) fell under the 10k-50k category whereas the other loan amount counts vary with the 1m_plus category having the lowest number of loans in that category (356). 
 
 ```{r}
 # Write the code to produce your answer here
+
+wv_loan_amounts <- west_virginia_ppp %>%
+  mutate(
+    loan_categories = case_when(
+      amount < 10000 ~ 'under_10k',
+      amount >= 10000 & amount < 50000 ~ '10k_50k',
+      amount >= 50000 & amount < 100000 ~ '50k_100k',
+      amount >= 100000 & amount < 500000 ~ '100k_500k',
+      amount >= 500000 & amount < 1000000 ~ '500k_1m',
+      amount > 1000000 ~ '1m_plus')) %>%
+  group_by(loan_categories) %>%
+  summarise(count=n())
 
 ```
 
 **Q2** Some of the loans appear not to have been paid out - there is a column representing the amount of money that hasn't been disbursed to the applicant. Which servicing lenders have the most loans with undisbursed amounts greater than 0?
-**A2** [write your answer here]
+**A2** Davis Trust Company and Miners & Merchants Bank
 
 ```{r}
 # Write the code to produce your answer here
+
+undisbursed_lenders <- west_virginia_ppp %>%
+  filter(undisbursed_amount > 0) 
 
 ```
 
 **Q3** What are some potential reasons why a loan might not be paid out? What questions does that circumstance raise for you?
-**A3** [write your answer here]
-
+**A3** It's possible the borrower didn't follow a lender's requirements or that the business closed permanently before the full loan amount could be disbursed. If this is the case, I'm curious about why a borrower wouldn't meet a lender's requirements and if this could be an indicator for flagging fraudulent applications. 
 
 **Q4** Which month in 2021 had the most loans approved?
-**A4** [write your answer here]
+**A4** March 2021
 
 ```{r}
 # Write the code to produce your answer here
+
+west_virginia_ppp %>%
+  mutate(Month = floor_date(date_approved, "month")) %>%
+  group_by(Month) %>%
+  summarise(total = n()) %>%
+  arrange(desc(total))
 
 ```
 
 **Q5** How many loans went to West Virginia applicants that listed the maximum number of jobs retained (500)? Which one had the earliest approved date?
-**A5** [write your answer here]
+**A5** 10 and the loan with the earliest approved date went to J. Austin Heating & Cooling, Inc. on April 8, 2020.
 
 ```{r}
 # Write the code to produce your answer here
+
+wv_jobs <- west_virginia_ppp %>%
+  filter(jobs_retained == 500)
 
 ```

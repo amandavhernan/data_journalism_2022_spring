@@ -1,7 +1,7 @@
 ---
 title: "lab_03"
-author: "sean mussenden"
-date: "8/19/2021"
+author: "Amanda Hernandez"
+date: "2/10/22"
 output: html_document
 ---
 
@@ -15,8 +15,10 @@ knitr::opts_chunk$set(echo = TRUE)
 options(scipen=999)
 
 # Load the tidyverse here
+library(tidyverse)
 
 # Load janitor here
+library(janitor)
 
 ```
 
@@ -25,6 +27,7 @@ options(scipen=999)
 # Write code to load the WV slice of the ppp loan data here and call it wv_ppp_loans.
 # The data is called lab_03.rds, and is in the same folder as lab_03.Rmd (this data notebook)
 
+wv_ppp_loans <- readRDS("lab_03.rds")
 
 ```
 
@@ -34,10 +37,36 @@ Q1: Which five cities located in Kanawha County, West Virginia, got the largest 
 
 Note: To answer this question, you'll need to see every variation of the "city" column in Kanawha County, and then fully clean the city field for those cities. Hint: once cleaned, the dataframe that counts the number of loans by city should have 38 distinct cities for Kanawha County.
 
-A1:
+A1: Charleston (2802), South Charleston (478), St. Albans (296), Dunbar (162), Nitro (140)
+
 ```{r}
 
 # Write your code in this codeblock.
+
+# check city names
+kanawha_loans <- wv_ppp_loans %>%
+  filter(project_county_name == 'KANAWHA') %>%
+  group_by(project_city)
+
+# clean city names
+clean_kanawha_loans <- kanawha_loans %>% 
+  clean_names() %>%
+  mutate(city = str_to_title(city)) %>%
+  mutate(city = case_when(
+    city == "Balle" ~ "Belle",
+    city == "Charelston" ~ "Charleston",
+    city == "Crosslanes" ~ "Cross Lanes"
+    city == "Elkveiw" ~ "Elkview",
+    city == "S Charleston" ~ "South Charleston",
+    city == "So Charleston" ~ "South Charleston",
+    city == "Saint Albans" ~ "St. Albans",
+    city == "St Albans" ~ "St. Albans",
+    city == "St.albans" ~ "St. Albans",
+    TRUE ~ city
+  )) %>%
+  group_by(city) %>%
+  summarise(count=n()) %>%
+  arrange(desc(count))
 
 ```
 
@@ -48,12 +77,31 @@ Q2: Find the 5-digit ZIP code in West Virginia that had the highest total amount
 * How much of that loan was forgiven?
 * Which number is bigger, the loan amount or the forgiveness amount? Can you explain the discrepancy?
 
-A2:
+A2: The business that recieved the largest loan was Jackson Kelly PLLC, which is located in Charleston (25301). The loan was for $5,068,472, but $5,126,619 was forgiven. The forgiveness amount is more than the approval amount, but I think this discrepency can be the result of interest also getting forgiven. 
 
 ```{r}
 # Hint
 # First, create a dataframe that shows the top 5-digit ZIP code by total dollar amount
 # Second, use the top ZIP code to create a separate dataframe that shows the business with the biggest loan in that ZIP code.
+
+# find zipcode with highest total amount of loans
+clean_wv_zipcodes <- wv_ppp_loans %>%
+  mutate(zip = str_sub(zip, start=1L, end=5L)) %>%
+  group_by(zip) %>%
+  summarise(total_amount = sum(amount)) %>%
+  arrange(desc(total_amount))
+
+# find business with highest loan in 25301
+loans_by_zipcode <- wv_ppp_loans %>%
+  mutate(zip = str_sub(zip, start=1L, end=5L)) %>%
+  filter(zip=="25301") %>%
+  group_by(name) %>%
+  summarise(total_amount = sum(amount)) %>%
+  arrange(desc(total_amount))
+
+# check loan info
+wv_ppp_loans %>%
+  filter(name=="JACKSON KELLY PLLC")
 
 ```
 
@@ -85,5 +133,7 @@ A3:
 # Hint
 # First, create a dataframe that only has loans to those five companies
 # Second, use that newly created dataframe to calculate total loan amount and percentage forgiven for those companies
+
+
 
 ```

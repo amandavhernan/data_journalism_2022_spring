@@ -1,7 +1,7 @@
 ---
 title: "lab_03"
 author: "Amanda Hernandez"
-date: "2/10/22"
+date: "2/12/22"
 output: html_document
 ---
 
@@ -77,7 +77,7 @@ Q2: Find the 5-digit ZIP code in West Virginia that had the highest total amount
 * How much of that loan was forgiven?
 * Which number is bigger, the loan amount or the forgiveness amount? Can you explain the discrepancy?
 
-A2: The business that recieved the largest loan was Jackson Kelly PLLC, which is located in Charleston (25301). The loan was for $5,068,472, but $5,126,619 was forgiven. The forgiveness amount is more than the approval amount, but I think this discrepency can be the result of interest also getting forgiven. 
+A2: The business that received the largest loan was Jackson Kelly PLLC, which is located in Charleston (25301). The loan was for $5,068,472, but $5,126,619 was forgiven. The forgiveness amount is more than the approval amount, but I think this discrepancy can be the result of interest also getting forgiven. 
 
 ```{r}
 # Hint
@@ -101,7 +101,8 @@ loans_by_zipcode <- wv_ppp_loans %>%
 
 # check loan info
 wv_ppp_loans %>%
-  filter(name=="JACKSON KELLY PLLC")
+  filter(name=="JACKSON KELLY PLLC") %>%
+  select(name, amount, forgiveness_amount)
 
 ```
 
@@ -126,7 +127,7 @@ Some hints to help you answer this question:
 * When you examine the disclosure forms, there may be lots of stock sales and retirement accounts mixed in.  Ignore those. In the table in the disclosure forms, look for "Partnership" or "C-Corp" in the column named "Income Type"
 * This is a link to details on passage of the [CARES ACT](https://www.congress.gov/bill/116th-congress/house-bill/748). You can find a link to how the House voted by clicking on a link from [this page](https://www.congress.gov/bill/116th-congress/house-bill/748/actions).
 
-A3:
+A3: The business names are DM Motors, Dutch Miller Chevrolet, Dutch Miller of Charleston, Dutch Miller of Charlotte, and Dutch Miller Subaru. All of these businesses are car dealerships. In total, the businesses received $3,105,300 in PPP loans and over 100% of the loan amount has been forgiven. Rep. Carol Miller voted in favor of the CARES Act. 
 
 ```{r}
 
@@ -134,6 +135,26 @@ A3:
 # First, create a dataframe that only has loans to those five companies
 # Second, use that newly created dataframe to calculate total loan amount and percentage forgiven for those companies
 
+# change business names to dutch miller auto
+updated_wv_ppp_loans <- wv_ppp_loans %>%
+  mutate(name = case_when(
+    name == "DM MOTOR, INC" ~ "DUTCH MILLER AUTO",
+    name == "DUTCH MILLER CHEVROLET, INC." ~ "DUTCH MILLER AUTO",
+    name == "DUTCH MILLER OF CHARLESTON, INC" ~ "DUTCH MILLER AUTO",
+    name == "DUTCH MILLER OF CHARLOTTE, INC" ~ "DUTCH MILLER AUTO",
+    name == "DUTCH MILLER SUBARU, INC" ~ "DUTCH MILLER AUTO",
+    TRUE ~ name
+  ))
 
+# filter by dutch miller auto
+miller_businesses <- updated_wv_ppp_loans %>%
+  filter(name == "DUTCH MILLER AUTO")
+
+# calculate total loan amount, forgiveness amount, and total percent forgiven
+miller_businesses %>%
+  mutate(total_loan_amount = sum(amount), 
+         total_forgiven = sum(forgiveness_amount),
+         total_percent_forgiven = (total_forgiven/total_loan_amount)*100) %>%
+  select(name, amount, forgiveness_amount, total_loan_amount, total_forgiven, total_percent_forgiven)
 
 ```

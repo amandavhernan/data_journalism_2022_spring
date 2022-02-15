@@ -1,7 +1,7 @@
 ---
 title: "pre_lab_04.Rmd"
-author: "derek willis"
-date: "8/24/2021"
+author: "Amanda Hernandez"
+date: "2/15/22"
 output: html_document
 ---
 
@@ -29,7 +29,7 @@ library(lubridate)
 Let's say that we have county population estimates for three different years - 2010, 2015 and 2020 - in three different files. They have the same record layout and the same number of counties.
 
 **Task** Load the three CSV population estimate files. Do they have the same column structure?
-**Answer**
+**Answer** Yes, the columns are identical across all three files.
 
 ```{r}
 popestimate_2010 <- read_csv("data/popestimate_2010.csv")
@@ -57,7 +57,7 @@ View(estimates)
 
 ### Task 4: Loading data
 **Task** Load the Maryland PPP data and a CSV file with NAICS codes. How many rows are in maryland_ppp?
-**Answer**
+**Answer** There are 190,787 rows in the maryland_ppp dataframe.
 
 ```{r}
 maryland_ppp <- read_csv("data/ppp_applications_md.csv")
@@ -69,7 +69,7 @@ naics_codes <- read_csv('data/naics_codes.csv')
 
 ### Task 5: Join Them
 **Task** Run the following code to join the PPP data to the NAICS codes using the common column naics_code as the key. How many rows are there now?
-**Answer**
+**Answer** The number of rows didn't change because each row in the Maryland PPP data was paired successfully with a NAICS code.
 
 ```{r}
 # with nrow included to match row total
@@ -99,7 +99,7 @@ maryland_zcta <- read_csv('data/maryland_zcta.csv')
 
 ### Task 9: Join ZCTA to PPP Data
 **Task** Join the ZCTA data to the our PPP & NAICS data. What's the error message you get? What do you think it means? Add a description of what this code does to your reference notebook.
-**Answer**
+**Answer** The dataframes can't be joined because the zip column in one dataframe is a character datatype while the zip column in the other dataframe is a numeric data type. The datatypes must be the same in order to successfully join the two dataframes.
 
 ```{r}
 # join on zip - but there's a problem
@@ -114,7 +114,7 @@ maryland_zcta <- maryland_zcta %>% mutate(across(ZCTA5N, as.character))
 
 ### Task 11: Join ZCTA to PPP Data and Check
 **Task** Join the ZCTA data to the our PPP & NAICS data. Examine the columns in the new dataframe - does every row have demographic data? HINT: Use the >> character to browse columns
-**Answer**
+**Answer** No, some data is missing because the zip codes didn't match. Some are five digit zip codes while others are nine. 
 
 ```{r}
 maryland_ppp_with_naics_and_demographics <- maryland_ppp_with_naics %>% left_join(maryland_zcta, by=c("zip"="ZCTA5N"))
@@ -123,7 +123,7 @@ View(maryland_ppp_with_naics_and_demographics)
 
 ### Task 12: Make a Zip5 Column, Join ZCTA to PPP Data and Check Again
 **Task** Make a zip5 column and join again. Examine the new dataframe - now does every row have demographic data?
-**Answer**
+**Answer** Yes.
 
 ```{r}
 # make a zip5 column and redo the join

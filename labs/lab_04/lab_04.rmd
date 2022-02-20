@@ -159,8 +159,7 @@ md_ppp_naics_demographics %>%
 **A5** Based off of past discussions about PPP race data, we know that some applicants chose not to provide their race or put "N/A" under the race field. There's also some discrepancies with how the race question on the application should have been filled out since it could refer to the race of the owner, CEO, etc. or the race of the person who filled the application out, which may not also be the owner. 
 
 **Q6** Check to see if any Maryland zip codes that have loans where the PPP data lists the applicant as being Asian BUT are located in a zip code that does not appear to have Asian population according to the ZCTA data. How many loans do they have and what is the total amount? Take a look at these zip codes - what could explain this?
-**A6** 
-
+**A6** The zip codes include 21031 (total amount: $149,450), 21240 (total amount: $296,076), and 20701 (total amount: $10,400. The first two zip codes had two loans while the third had only one loan. One possibility that could explain this are errors in data entry where an applicant put down the incorrect race. It's also possible that the race fields were changed by mistake during the database creation process. Another possibility is that the applicant filled out the race field based on the race of the owner/CEO or their own race if they're not the same person.
 
 ```{r}
 # Write the code to produce your answer here

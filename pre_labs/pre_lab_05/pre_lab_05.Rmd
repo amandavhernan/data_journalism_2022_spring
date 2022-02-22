@@ -35,7 +35,7 @@ library(refinr)
 
 ### Task 3: Load data
 **Task** Run the following code to load the zipped-up Maryland PPP loans data. How many records are in this table?
-**Answer**
+**Answer** There are 195,865 records.
 
 ```{r}
 # Load data
@@ -48,10 +48,10 @@ md_loans
 
 ### Task 4: Group and count to identify problems in city column
 **Task** Run the following code to group and count records in the city column, and filter to examine only cities that start with A. Name a problem that you see that is preventing proper grouping.
-**Answer**
+**Answer** The style of how some of the cities are written is inconsistent. For example, "Abell" is not the same thing as "ABELL" and "aberdeen" is not the same as "Aberdeen" or "ABERDEEN."
 
 ```{r}
-# Now let's try and group and count the number of loans by city. To make it a bit more managable, let's use another string function from `stringr` and filter for cities that start with the uppercase "A" or lowercase "a" using the function `str_detect()` with a regular expression.  
+# Now let's try and group and count the number of loans by city. To make it a bit more manageable, let's use another string function from `stringr` and filter for cities that start with the uppercase "A" or lowercase "a" using the function `str_detect()` with a regular expression.  
 
 # The filter function in the codeblock below says: look in the city column, and pluck out any value that starts with (the "^" symbol means "starts with") a lowercase "a" OR (the vertical "|", called a pipe, means OR) an uppercase "A".  
 
@@ -66,7 +66,7 @@ md_loans %>%
 
 ### Task 5: Use refinr to clean the city_clean field. 
 **Task** Run the following code to make a copy of the city field called city_clean, then use the `key_collision_merge` function from refinr to attempt to standarize similar values. Store it as a new object called clean_md_loans.  Click the black arrow on the table to examine the city and city_clean columns.  Looking at the results on the first page only (first 10 rows), name two changes the refinr package made, by comparing city to city_clean.
-**Answer**
+**Answer** 
 
 ```{r}
 cleaned_md_loans <- md_loans %>%

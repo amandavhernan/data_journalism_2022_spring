@@ -66,7 +66,7 @@ md_loans %>%
 
 ### Task 5: Use refinr to clean the city_clean field. 
 **Task** Run the following code to make a copy of the city field called city_clean, then use the `key_collision_merge` function from refinr to attempt to standarize similar values. Store it as a new object called clean_md_loans.  Click the black arrow on the table to examine the city and city_clean columns.  Looking at the results on the first page only (first 10 rows), name two changes the refinr package made, by comparing city to city_clean.
-**Answer** 
+**Answer**
 
 ```{r}
 cleaned_md_loans <- md_loans %>%

@@ -73,7 +73,7 @@ Then answer these questions:
 * How many loans are there at that street address?
 * What are the names of the businesses at that address?
 
-**A1.** The street address with the most loans is 126 E Burke St, which has six. The names of the businesses include: 1. DREW HOLDINGS LLC, 2. BRIX27, LLC, 3. ABRAHAM ASHTON, 4. HUB CO-OP LLC (2 loans), and 5. RONIN PROPERTIES LLC. 
+**A1.** The street address with the most loans is 126 E Burke St, which has six. The names of the businesses include: 1. DREW HOLDINGS LLC, 2. BRIX27, LLC, 3. ABRAHAM ASHTON, 4. HUB CO-OP LLC (2 loans), and 5. RONIN PROPERTIES LLC.
 
 ```{r}
 

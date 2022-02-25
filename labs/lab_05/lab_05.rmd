@@ -1,7 +1,7 @@
 ---
 title: "lab_05"
-author: "Sean Mussenden"
-date: "8/24/2021"
+author: "Amanda Hernandez"
+date: "2/24/22"
 output: html_document
 ---
 
@@ -29,6 +29,9 @@ You'll need to load two packages for this: the tidyverse and janitor.
 # Turn off scientific notation
 options(scipen=999)
 
+library(tidyverse)
+library(janitor)
+
 ```
 
 ## Load Data
@@ -42,6 +45,14 @@ You'll need to load three data sets for this:
 All three data sets are in the data folder.  Write code to load the three in the codeblock below.
 
 **Task** Create a codeblock below this task, then read the data sets in in and assign them to appropriate variable names. There's a fourth data set you'll use in this lab, too, of selected loans in ZIP Code 25401. But there's no need to load it now.
+
+```{r}
+
+wv_ppp_loans <- readRDS("data/lab_05.rds")
+naics_codes <- read_csv('data/naics_codes.csv')
+wv_population_county <- read_csv('data/wv_population_county.csv')
+
+```
 
 ## Answer questions
 
@@ -62,9 +73,11 @@ Then answer these questions:
 * How many loans are there at that street address?
 * What are the names of the businesses at that address?
 
-**A1.**
+**A1.** The street address with the most loans is 126 E Burke St, which has six. The names of the businesses include: 1. DREW HOLDINGS LLC, 2. BRIX27, LLC, 3. ABRAHAM ASHTON, 4. HUB CO-OP LLC (2 loans), and 5. RONIN PROPERTIES LLC. 
 
 ```{r}
+
+clean_25401_loans <- read_csv('data/clean-zip-25401-loan-sample.csv')
 
 ```
 
@@ -74,7 +87,7 @@ Google the street address.  Google the business names and search for their corpo
 
 Based on your research, does it seem suspicious that this collection of businesses all got loans using the same address? Why or why not. Use specific facts identified in your research to support your position.
 
-**A2.**
+**A2.** No, based on my research I do not believe it's suspicious for these businesses to share the same address. I started with looking at the Google Maps street view where I saw a sign for The Hub, which correlated with the address. I looked it up and Google directed me to their website, https://www.themartinsburghub.com/. It turns out The Hub is a community workspace and offers office space, conference rooms, mail service, and more. Their website also says they're a "dedicated HUBZone location" and recognized by the Small Business Administration. Based on this information, the businesses identified in question 1 all likely use this space and its amenities.
 
 **Q3.** Start by using the West Virginia slice of the PPP loan data that you loaded at the start of the lab to create a subset of PPP loans in West Virginia's second largest county (which you can find in wv_population_county). And then use that table you created to answer the following questions:
 
@@ -85,20 +98,54 @@ Requirement: you MUST export a dataframe of PPP loans from R Studio at some poin
 
 ```{r}
 # write_csv accepts 2 arguments: the dataframe and the path to the file you write out
-write_csv(wv_population_county, "data\wv_population_county.csv")
+write_csv() example: write_csv(wv_population_county, "data\wv_population_county.csv")
+
 ```
 
 Guidance: there are a lot of steps you'll need to take to answer this question. You may find it helpful to write out in English what you plan to do step-by-step before you start writing code.   
 
-**A3.**
+**A3.** The city with the highest number of loans was Martinsburg with a total of 1,166 loans. The industry with the most loans was full-service restaurants.
 
 ```{r}
+
+# second largest county is Berkeley
+wv_population_county %>%
+  group_by(county) %>%
+  summarise(population_2019) %>%
+  arrange(desc(population_2019))
+
+# creating Berkeley subset
+berkeley_wv_loans <- wv_ppp_loans %>%
+  filter(project_county_name == "BERKELEY")
+
+# export from RStudio, clean in Open Refine
+write_csv(berkeley_wv_loans, "berkeley_wv_loans")
+
+# import clean csv from Open Refine
+clean_berkeley_wv_loans <- read_csv('data/clean-berkeley-wv-loans.csv')
+
+# join clean Berkeley + naics codes dataframes
+berkeley_loans_naics <- clean_berkeley_wv_loans %>% 
+  left_join(naics_codes, by="naics_code")
+
+# determine city w/ highest number of loans -> Martinsburg, 1166
+berkeley_loans_naics %>%
+  group_by(city) %>%
+  summarise(count=n()) %>%
+  arrange(desc(count))
+
+# determine industry w/ highest number of loans
+berkeley_loans_naics %>%
+  filter(city == "Martinsburg") %>%
+  group_by(title, naics_code) %>%
+  summarise(count=n()) %>%
+  arrange(desc(count))
 
 ```
 
 **Q4.** What are your two best hypotheses, which you'd need to confirm with reporting and further analysis, that explain why that industry is at the top of the list?
 
-**A4.**
+**A4.** Based on the city's website (https://www.cityofmartinsburg.org/), I learned that the area is fairly developed and more urban than other parts of the state. The city also has a downtown area offering a variety of activities, including dining experiences. The website also advertises hiking trials. With that said, it's possible that the city experiences a lot of tourism, which drives up the restaurant industry in the area. My other guess is that those loans may also correspond to people who sell plates of food out of their homes. 
 
 **Q5.** Start with a dataframe of loans to all businesses in the city and industry that answered question 3. Answer the following questions:
 * What is the name of the business that got the highest approved loan amount?
@@ -111,4 +158,19 @@ Guidance: there are a lot of steps you'll need to take to answer this question. 
 
 Hint: you will not find the answers to the last three questions in the data.  You could call them directly to get that information, but I don't want you to do that for this assignment.  Instead, do some web research. I would start by Googling the company name from the data and looking at the page that comes up for the business from at http://apps.sos.wv.gov/. I would use information I found on that page and use info about the company from Google, the [Wayback machine](https://archive.org/web/) (which lets you look at older versions of a company's website), Yelp, and Facebook.
 
-**A5.**
+**A5.** The business with the highest approved loan amount was Cottle Christi L LLC. The business received a $280,434 loan, which was approved on 2/17/2021. According to the data, it loan helped retain 94 jobs. Yes, there's a difference in the name. To customers, this business is known as Kitzie's Restaurant and Lounge. The business has two locations, one in Martinsburg and another in Spring Mills. The Martinsburg location closed in March 2020, according to the businesses' Facebook page, which was before they were approved a PPP loan.
+
+```{r}
+# create new Martinsburg loans dataframe
+martinsburg_ppp_loans <- berkeley_loans_naics %>%
+  filter(city == "Martinsburg", naics_code == 722511)
+
+# find business w/ highest approved loan amount -> COTTLE CHRISTI L LLC
+martinsburg_ppp_loans %>%
+  group_by(name) %>%
+  summarise(total_amount = sum(amount)) %>%
+  arrange(desc(total_amount))
+
+martinsburg_ppp_loans %>%
+  filter(name == "COTTLE CHRISTI L LLC")
+```

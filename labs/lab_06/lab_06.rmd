@@ -1,0 +1,162 @@
+---
+title: "lab_06"
+author: "Amanda Hernandez"
+date: "3/3/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## About this lab
+
+To complete this lab, you need to:
+* [install Tabula](https://tabula.technology/)
+* run existing code as directed (look for **Task**).
+* write code as directed (look for **Task**).
+* write code in empty codeblocks provided to answer questions included (look for **Q**).
+* write out the answer in the form of a complete sentence in the space given (look for **A**).
+
+When you are finished, commit changes in the lab_06 folder and push to your personal GitHub repo, then submit the URL to this document on ELMS.
+
+## Load libraries and establish settings
+
+**Task** Run the codeblock below to load the Tidyverse. To run the codeblock, hit the little green play button in the upper right corner of the gray area (the codeblock) below.
+
+```{r}
+# Turn off scientific notation
+options(scipen=999)
+
+# Load the tidyverse.
+library(tidyverse)
+```
+
+## Get Our PDF
+
+We'll be working with the [Maryland Statistical Handbook](https://planning.maryland.gov/MSDC/Documents/md-statistical-handbook.pdf) from the state Department of Planning. It's not tiny (44MB), and you'll want to download it to a place you'll remember (like your Downloads folder).
+
+**Task** Download the file from the above link and save it to your Downloads folder.
+
+## Setup Tabula
+
+**Task** Start Tabula and load the PDF, then extract a table
+
+Start Tabula, then go to http://127.0.0.1:8080/ in your browser. Click the "Browse" button and find the Statistical Handbook file in your Downloads folder and click "open", and then click the "Import button" in Tabula. This will take a minute or two.
+
+Let's go to page 30 of the PDF, Table 2A, "International Migration for Maryland's Jurisdictions, July 1, 2010 to July 1, 2019". This is _net migration_, meaning it shows the total number of people moving to Maryland and its regions/jurisdictions _minus_ the total number of people leaving the same, divided into 12-month periods from July to July. In Tabula, draw a box around that table's border and click the "Preview & Export Extracted Data" button. It should look pretty clean. Let's export that CSV (it should be called `tabula-md-statistical-handbook.csv` by default) to your lab_06/data folder.
+
+## Cleaning up the data in R
+
+Let's load it into R, and in doing so we'll skip the first two rows and add our own headers that are cleaner. `read_csv` allows us to do this ([and more](https://readr.tidyverse.org/reference/read_delim.html)):
+
+**Task** Write code to read the CSV file into a dataframe called `international_migration`. As in the pre_lab, you may have to skip 1 or more rows and you may want to supply easier to use column names that use underscores.
+
+```{r}
+# Write the code to load the CSV file here
+
+international_migration <- read_csv("tabula-md-statistical-handbook.csv", skip=2, col_names=c("state_region_county", "july_2011", "july_2012", "july_2013","july_2014", "july_2015", "july_2016", "july_2017", "july_2018", "july_2019", "total_int_migration"))
+
+```
+
+Add a column for the type of migration ("international") and populate it:
+
+**Task** Write the code to add a `migration_type` column to the data and give it the value of "international"
+
+```{r}
+# Write the code to add the column here
+
+international_migration <- international_migration %>%
+  mutate(migration_type = "international")
+
+```
+
+## Answer questions
+
+**Q1** Which region and county/city _below_ the state level accounted for the largest percentage of international migration for the entire time period? You'll need to add and populate a column representing percent of total using `mutate`.
+**A1** The Suburban Washington Region (62.8 -> 63%) and Montgomery County (36.7 -> 37%) accounted for the largest percentage of international migration between 2010-2019.
+
+```{r}
+# Write the code to produce your answer here
+
+international_migration %>%
+  mutate(percent_total = ((total_int_migration/198996)*100)) %>%
+  arrange(desc(percent_total))
+
+```
+
+**Q2** Write a sentence or two that describes the data you produced in A1. Try to convey the most important idea.
+**A2** The data shows that the majority of those who migrated internationally settled in the Suburban Washington Region and roughly 37% of that population settled in Montgomery County.
+
+**Q3** Which region & jurisdiction had the largest percentage change (either negative or positive) for international migration between July 2018 and July 2017? The formula for percentage change is easy to remember: (New-Old)/Old.
+**A3** The Southern Maryland Region saw a roughly -58% decrease in international migration between July 2018-2017 whereas Calvert County saw a -77% decrease.
+
+```{r}
+# Write the code to produce your answer here
+
+international_migration %>%
+  mutate(july_17_18_change = ((july_2018 - july_2017)/july_2017)*100) %>%
+  arrange(july_17_18_change)
+  
+```
+
+**Q4** What's your best guess as to why these changes occurred, and in those places in particular?
+**A4** With Trump in office at the time, I know his administration cracked down on international immigration with policies such as the zero tolerance policy, which criminally prosecuted those who tried to cross U.S. boarders anywhere other than official ports.
+
+## Back to Tabula
+
+**Task** Extract second table from Tabula
+
+Let's go to page 31 of the PDF, Table 2B, "Domestic Migration for Maryland's Jurisdictions, July 1, 2010 to July 1, 2019". In Tabula, hit the "Clear All Selections" button and then draw a box around that table's border and click the "Preview & Export Extracted Data" button. It should look pretty clean. Let's export that CSV to your lab_06/data folder. (and rename it to `tabula-md-statistical-handbook-domestic.csv`).
+
+## Cleaning up the data in R
+
+Let's load it into R, and in doing so we'll skip the first two rows and add our own headers that are cleaner:
+
+**Task** Write code to read the CSV file into a dataframe called `domestic_migration`. As in the pre_lab, you may have to skip 1 or more rows and you may want to supply easier to use column names that use underscores. Your work on the international file should serve as a guide.
+
+```{r}
+# Write the code to load the CSV file here
+
+domestic_migration <- read_csv("tabula-md-statistical-handbook-domestic.csv", skip=2, col_names=c("state_region_county", "july_2011", "july_2012", "july_2013","july_2014", "july_2015", "july_2016", "july_2017", "july_2018", "july_2019", "total_dom_migration"))
+
+```
+
+Add a column for the type of migration ("domestic") and populate it:
+
+**Task** Write the code to add a `migration_type` column to the data and populate it with the value of "domestic"
+
+```{r}
+# Write the code to add the column here
+
+domestic_migration <- domestic_migration %>%
+  mutate(migration_type = "domestic")
+
+```
+
+## Answer questions
+**Q5** Which Maryland individual jurisdiction saw the largest net decrease in domestic migration overall?
+**A5** The Maryland jurisdiction with the largest net decrease in domestic migration was Baltimore County (-62834).
+
+```{r}
+# Write the code to produce your answer here
+
+domestic_migration %>%
+  arrange(total_dom_migration)
+
+```
+
+**Q6** How many regions & jurisdictions had net positive migration for July 2017, July 2018 and July 2019 (not just individually but all three together)?
+**A6** There were 14 regions and jurisdictions.
+
+```{r}
+# Write the code to produce your answer here
+
+pos_migration <- domestic_migration %>%
+  filter(july_2017 > 0 & july_2018 > 0 & july_2019 > 0) %>%
+  select(state_region_county, july_2017, july_2018, july_2019)
+
+```
+
+**Q7** How would you describe this data? Is there a county or region that stands out, and why?
+**A7** This data shows which counties and regions had a net positive increase over a three year period (2017-2019). The county that stood out the most to me was Talbot because domestic migration increased from 9 to 242, which is a larger jump compared to the other counties/regions. I also thought it was intresting how Caroline County went from 177 in 2017 to 9 in 2019.

@@ -1,0 +1,186 @@
+---
+title: "Reverse Engineering Project"
+author: "Amanda Hernandez, Greg Morton"
+date: "3/5/2022"
+output:
+  html_document:
+    theme: cerulean
+    highlight: pygments
+    toc: true
+    toc_float:
+      collapsed: true
+      smooth_scroll: false
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Introduction 
+
+In this notebook, we are reverse engineering the story, CEOs gave heavily during legislative session, exposing loophole in NC's fundraising ban (https://www.wral.com/in-session-campaign-donations/17716104/)
+
+## Load libraries
+
+Loading required libraries for this analysis.
+
+```{r echo=FALSE, message=FALSE}
+
+library(tidyverse)
+library(tidyr)
+library(lubridate)
+library(dplyr)
+
+```
+
+## Load and Cleaning Data
+
+In this section, describe the source of the data, write a basic data dictionary for data you are working with, and discuss any caveats or issues you discovered working with this data. 
+
+```{r}
+# Load required data
+nc_session_donations <- read.csv("data/nc_session_donations.csv")
+
+# Path to data should be loaded from folder "data" i.e. read_csv("data/name_of_data.csv")
+
+# Clean required data and prepare for analysis if needed. 
+
+# fix amount column
+nc_session_donations <- nc_session_donations %>% 
+  mutate(amount=as.numeric(parse_number(amount)))
+
+# fix date column
+nc_session_donations <- nc_session_donations %>%
+  mutate(date = mdy(date)) 
+
+# check data
+View(nc_session_donations)
+
+
+```
+
+## Sentences to Engineer
+In this notebook, we are reverse engineering five sentences from the story.
+
+### Sentence 1
+
+* **Sentence text**: Senate President Pro Tem Phil Berger's campaign alone raised nearly $222,000 during session. Twenty-three people gave him the maximum allowed: $5,200.
+* **Analysis summary**: Our analysis found that Senate President Pro Tem Phil Berger's campaign raised $221,825 during the legislative session, confirming the quote "nearly $222,000" in the story. We were also able to confirm that 23 people donated exactly $5,200, which is the maximum amount allowed, to Berger's campaign.
+
+```{r}
+# Put code to reverse engineer sentence here
+
+nc_session_donations %>%
+  filter(committee_name == "PHILIP E BERGER COMM") %>%
+  filter(date > "2018-05-16" & date < "2018-06-30") %>%
+  group_by(committee_name) %>%
+  summarize(total_amount = sum(amount)) # confirms Berger received nearly Senate President Pro Tem Phil Berger ($221,825 exactly)
+
+berger_max_donors <- nc_session_donations %>%
+  filter(committee_name == "PHILIP E BERGER COMM") %>%
+  filter(date > "2018-05-16" & date < "2018-06-30") %>% 
+  filter(amount == 5200) # confirms 23 people donated max amount to Berger
+
+# Display results of code below this codeblock
+
+```
+
+### Sentence 2
+
+* **Sentence text**: There was a major bump during the first week of session this year for the state parties, but that's because three large donors – LinkedIn co-founder Reid Hoffman, Durham investor Greg Lindberg and Lindberg's Eli Research company – donated $1.3 million that week to the state Republican and Democrat parties.
+* **Analysis summary**: Our analysis confirmed that during the first week of the legislative session, Reid Hoffman, Greg Lindberg, and Lindberg's company Eli Research LLC were the top three donors. However, when adding up their respective donation amounts, the result is $1.25 million, not $1.3 million.
+
+```{r}
+# Put code to reverse engineer sentence here
+
+first_wk_top_donors <- nc_session_donations %>%
+  filter(date >= "2018-05-16" & date <= "2018-05-23") %>%
+  group_by(name.clean) %>%
+  summarise(total_donation_amount = sum(amount)) %>%
+  arrange(desc(total_donation_amount)) # confirms Hoffman, Lindberg, and Eli Research LLC as top donors during first week
+
+500000 + 500000 + 250000 # = 1,250,000 (~$1.3 mil donations between Hoffman, Lindberg, and Eli Research LLC)
+
+```
+
+### Sentence 3
+
+* **Sentence text**: Beer distributors also gave during session. Mark Craig, the president of distributor R.H. Barringer, put more than $30,000 into state legislative campaigns during the six-week period, including the maximum $5,200 to Berger. He was the top individual donor to legislative campaigns during session.
+* **Analysis summary**: Our analysis confirmed that Mark Craig donated the maximum amount allowed to Berger and donated over $30,000 total during the legislative session. However, we were not able to confirm that he was the top individual donor.
+
+```{r}
+# Put code to reverse engineer sentence here
+
+mark_craig_donations <- nc_session_donations %>%
+  filter(name.clean == "MARK R CRAIG") %>%
+  filter(date > "2018-05-16" & date < "2018-06-30") %>%
+  arrange(desc(amount)) # confirms max donation to Berger
+
+sum(mark_craig_donations$amount) # confirms donation total over $30,000
+
+individual_top_donors <- nc_session_donations %>%
+  filter(date > "2018-05-16" & date < "2018-06-30") %>%
+  filter(transaction_type == "Individual") %>%
+  group_by(name.clean) %>%
+  summarise(total_donation_amount = sum(amount)) %>%
+  arrange(desc(total_donation_amount))
+
+# Display results of code below this codeblock
+
+```
+
+### Sentence 4
+
+* **Sentence text**: R.H. Barringer's board chair, Jasie Barringer, donated another $8,200 in-session, and Teresa Craig kicked in another $5,200 to Berger. The North Carolina Beer & Wine Wholesalers Association PAC gave $18,400 during the week before session and on opening day.
+* **Analysis summary**: Our analysis confirmed the donations amounts made by Jasie Barringer, Teresa Craig, and the North Carolina Beer & Wine Wholesalers Association PAC.
+
+```{r}
+# Put code to reverse engineer sentence here
+
+# Jasie Barringer -> $8,200
+nc_session_donations %>%
+  filter(name.clean == "JASIE S BARRINGER") %>%
+  filter(date >= "2018-05-16" & date <= "2018-06-30") %>%
+  group_by(name.clean) %>%
+  summarize(total_amount = sum(amount))
+
+# Teresa Craig -> $5,200
+nc_session_donations %>%
+  filter(name.clean == "TERESA S CRAIG") %>%
+  filter(date >= "2018-05-16" & date <= "2018-06-30") %>%
+  group_by(name.clean) %>%
+  summarize(total_amount = sum(amount))
+
+# North Carolina Beer & Wine Wholesalers Association PAC -> $18,400
+nc_session_donations %>%
+  filter(name.clean == "NC BEER & WINE WHOLESALERS ASSOC PAC") %>%
+  filter(date >= "2018-05-09" & date <= "2018-05-16") %>%
+  group_by(name.clean) %>%
+  summarize(total_amount = sum(amount))
+
+# Display results of code below this codeblock
+
+```
+
+### Sentence 5
+
+* **Sentence text**: Smithfield Foods' PAC gave another $10,000 to various legislators and the state Republican and Democratic parties, some just before, some just after the session began. The North Carolina Pork Council gave $10,000 during session to the state Republican Party and $5,000 right at the session's start to the Democrats.
+* **Analysis summary**: [Write up two to three sentences describing the results of your analysis.  Were you able to confirm the finding? If not, why not?]
+
+```{r}
+# Put code to reverse engineer sentence here
+
+# Still working on this
+
+nc_session_donations %>%
+  filter(name.clean == "SMITHFIELD FOODS PAC")
+
+nc_session_donations %>%
+  filter(name.clean == "NC PORK COUNCIL PAC") %>%
+  filter(source == "parties")
+
+# Display results of code below this codeblock
+
+```
+
+-30-

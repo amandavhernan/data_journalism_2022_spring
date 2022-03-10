@@ -1123,7 +1123,7 @@ Here's the table on the mining sector page: [https://www.bls.gov/iag/tgs/iag21.h
 
 ### Task 36: Go to the web page linked above
 **Task** Visit the web page linked above. Briefly describe what you see there.
-**Answer** 
+**Answer** The page shows information about the mining, quarrying, and oil and gas extraction industry.
 
 ### Task 37: Load image
 **Task** Run the following code to display an image showing what you should see on the web page.
@@ -1137,7 +1137,7 @@ And here's the table for the agriculture sector.
 
 ### Task 38: Go to the web page linked above
 **Task** Visit the web page linked above. Briefly describe what you see there.
-**Answer** The page shows information about the mining, quarrying, and oil and gas extraction industry.
+**Answer** The page shows information about the agriculture, forestry, fishing and hunting industry.
 
 ### Task 39: Load image
 **Task** Run the following code to display an image showing what you should see on the web page.

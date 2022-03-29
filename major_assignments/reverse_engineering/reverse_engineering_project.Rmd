@@ -56,7 +56,6 @@ nc_session_donations <- nc_session_donations %>%
 # check data
 View(nc_session_donations)
 
-
 ```
 
 ## Sentences to Engineer
@@ -106,24 +105,27 @@ first_wk_top_donors <- nc_session_donations %>%
 ### Sentence 3
 
 * **Sentence text**: Beer distributors also gave during session. Mark Craig, the president of distributor R.H. Barringer, put more than $30,000 into state legislative campaigns during the six-week period, including the maximum $5,200 to Berger. He was the top individual donor to legislative campaigns during session.
-* **Analysis summary**: Our analysis confirmed that Mark Craig donated the maximum amount allowed to Berger and donated over $30,000 total during the legislative session. However, we were not able to confirm that he was the top individual donor.
+* **Analysis summary**: Our analysis confirmed that Mark Craig donated the maximum amount allowed to Berger and donated over $30,000 total during the legislative session. We also confirmed that Craig was the top individual donor to legislative campaigns during the session, donating a total of $25,000. 
 
 ```{r}
 # Put code to reverse engineer sentence here
 
 mark_craig_donations <- nc_session_donations %>%
   filter(name.clean == "MARK R CRAIG") %>%
-  filter(date > "2018-05-16" & date < "2018-06-30") %>%
+  filter(date >= "2018-05-16" & date <= "2018-06-30") %>%
   arrange(desc(amount)) # confirms max donation to Berger
 
 sum(mark_craig_donations$amount) # confirms donation total over $30,000
 
-individual_top_donors <- nc_session_donations %>%
+# state party committees (committee_name) -> NC REC - STATE, NC REC BUILDING FUND, NORTH CAROLINA SENATE MAJORITY FUND, NC HOUSE REPUBLICAN CAMPAIGN COMMITTEE, NC REPUBLICAN COUNCIL OF STATE COMMITTEE, NC DEC - STATE, NORTH CAROLINA DEMOCRATIC PARTY - BUILDING
+
+individual_top_donors <- nc_session_donations %>% 
+  subset(committee_name!="NC DEC - STATE" & committee_name!="NC REC - STATE" & committee_name!="NC REC BUILDING FUND" & committee_name!="NORTH CAROLINA DEMOCRATIC PARTY - BUILDING" & committee_name!="NC REPUBLICAN COUNCIL OF STATE COMMITTEE" & committee_name!="NC HOUSE REPUBLICAN CAMPAIGN COMMITTEE" & committee_name!= "NORTH CAROLINA SENATE MAJORITY FUND") %>%
   filter(date > "2018-05-16" & date < "2018-06-30") %>%
   filter(transaction_type == "Individual") %>%
   group_by(name.clean) %>%
   summarise(total_donation_amount = sum(amount)) %>%
-  arrange(desc(total_donation_amount))
+  arrange(desc(total_donation_amount)) # confirms Craig as individual top donor
 
 # Display results of code below this codeblock
 
@@ -164,20 +166,27 @@ nc_session_donations %>%
 
 ### Sentence 5
 
-* **Sentence text**: Smithfield Foods' PAC gave another $10,000 to various legislators and the state Republican and Democratic parties, some just before, some just after the session began. The North Carolina Pork Council gave $10,000 during session to the state Republican Party and $5,000 right at the session's start to the Democrats.
-* **Analysis summary**: [Write up two to three sentences describing the results of your analysis.  Were you able to confirm the finding? If not, why not?]
+* **Sentence text**: The North Carolina Pork Council gave $10,000 during session to the state Republican Party and $5,000 right at the session's start to the Democrats.
+* **Analysis summary**: Our analysis confirmed that the North Carolina Pork Council PAC donated $10k to the Republicans during the session and $5k to the Democratic Party at the beginning of the session.
 
 ```{r}
 # Put code to reverse engineer sentence here
 
-# Still working on this
-
-nc_session_donations %>%
-  filter(name.clean == "SMITHFIELD FOODS PAC")
+# republican party -> NC REC - STATE, democratic party -> NC DEC - STATE
 
 nc_session_donations %>%
   filter(name.clean == "NC PORK COUNCIL PAC") %>%
-  filter(source == "parties")
+  filter(committee_name == "NC REC - STATE") %>%
+  filter(date >= "2018-05-16" & date <= "2018-06-30") %>%
+  group_by(committee_name) %>%
+  summarize(total_amount = sum(amount)) # confirms 10k donated to Republican Party during session
+
+nc_session_donations %>%
+  filter(name.clean == "NC PORK COUNCIL PAC") %>%
+  filter(committee_name == "NC DEC - STATE") %>%
+  filter(date >= "2018-05-15" & date <= "2018-05-16") %>%
+  group_by(committee_name) %>%
+  summarize(total_amount = sum(amount)) # confirms 5k donated to Democratic Party at the beginning of the session
 
 # Display results of code below this codeblock
 

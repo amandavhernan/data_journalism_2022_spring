@@ -83,7 +83,7 @@ knitr::include_graphics(rep("images/ppp_datawrapper7.png"))
 
 Some publication systems allow for the embedding of HTML into a post or a story. Some don't. The only way to know is to ask someone at your publication. Every publication system on the planet, though, can publish an image. So there's always a way to export your chart as a PNG file, which you can upload like any photo.
 
-**Answer** Copy the url of the graphic you published here.
+**Answer** https://datawrapper.dwcdn.net/jcUjd/1/
 
 ### Task 8: Make a Choropleth Map
 
@@ -96,7 +96,7 @@ maryland_ppp <- read_rds("data/pre_lab_10.rds")
 ```
 
 **Task** First, we'll create a dataframe that has county (jurisdiction) level counts of approved applications. Run the following code to do that. There are some mistakes in the data, so we're going to remove those with a filter after doing the counting.
-**Answer** Describe what the code below is doing and the output.
+**Answer** The code below groups Maryland county names and counts how many PPP loans were applied for in each jurisdiction. Some of the issues with the dataset include county data for counties outside of Maryland (e.g., Broward, Middlesex, Portsmouth City)
 
 ```{r}
 md_counties <- maryland_ppp %>%
@@ -105,7 +105,7 @@ md_counties <- maryland_ppp %>%
 ```
 
 **Task** Let's deal with those seemingly extraneous records that don't appear to be MD PPP applications:
-**Answer** Describe what the code below is doing and the output.
+**Answer** The code below filters out the counties that have less than 6 loans, which removes the counties not located in Maryland.
 
 ```{r}
 md_counties <- maryland_ppp %>%
@@ -134,7 +134,7 @@ md_fips <- all_fips %>% filter(state == 'MD')
 Looks good, but there are two issues: Datawrapper expects a 5-digit FIPS code (the state code plus the county code, so "24001" for Allegany County) and the county names don't match the `project_county_name` in the PPP data. Let's fix the first issue - adding a full FIPS code based on its components using the function `str_c`, which concatenates multiple strings:
 
 **Task** Generate full FIPS codes
-**Answer** Describe the contents of the new `fips_code` column
+**Answer** The new "flips_code" column is a combination of the state and county code for each record. 
 
 ```{r}
 md_fips <- md_fips %>% mutate(fips_code = str_c(state_code, county_code))
@@ -157,7 +157,7 @@ md_fips <- md_fips %>% mutate(match_county = str_to_upper(county)) %>%
 ```
 
 **Task** Now we'll join `md_counties` and `md_fips` together using our new `match_county` column:
-**Answer** Describe here what you see in `md_counties_with_fips`
+**Answer** The new "md_counties_with_fips" dataset now includes the number of PPP loans per county in addition to the flip code, which means it's ready to be imported to Datawrapper.
 
 ```{r}
 md_counties_with_fips <- md_counties %>%
@@ -192,7 +192,7 @@ knitr::include_graphics(rep("images/ppp_datawrapper9.png"))
 You'll see that the map currently is of the whole nation, and we only have Maryland data. Let's fix that.
 
 **Task** Look for "Hide regions without data" under Appearance, and click the slider icon to enable that feature. You should see a map zoomed into Maryland with some counties in various colors.
-**Answer** Describe the changes from the previous map
+**Answer** The first map was a map of the entire United States by county. The new map, which was generated after clicking "Hide regions without data," only shows Maryland counties.
 
 But it's a little rough visually, so let's clean that up.
 
@@ -201,9 +201,9 @@ But it's a little rough visually, so let's clean that up.
 That's better, but check out the tooltip by hovering over a county. It's not super helpful. Let's change the tooltip behavior to show the county name and a better-formatted number.
 
 **Task** Click the "Customize tooltips" button so it expands down. Change {{ fips }} to {{ county }} and {{ count }} to {{ FORMAT(count, "0,0.[00]")}}
-**Answer** Describe the changes from the previous map
+**Answer** By customizing the tooltips, the map now provides better context in a more readable format.
 
 Ok, that looks better. Let's publish!
 
 **Task** Click the "Proceed" button until you get to the "Publish & Embed" tab, then click "Publish Now". Copy the URL and paste it below.
-**Answer** Put the URL of your map here.
+**Answer** https://datawrapper.dwcdn.net/SO0FE/2/

@@ -1,7 +1,7 @@
 ---
 title: "pre_lab_10.Rmd"
-author: "derek willis"
-date: "9/23/2021"
+author: "Amanda Hernandez"
+date: "4/5/2022"
 output: html_document
 ---
 

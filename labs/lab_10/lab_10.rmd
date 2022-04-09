@@ -1,7 +1,7 @@
 ---
 title: "lab_10.Rmd"
-author: "derek willis"
-date: "11/02/2021"
+author: "Amanda Hernandez"
+date: "4/7/2022"
 output: html_document
 ---
 
@@ -23,6 +23,11 @@ knitr::opts_chunk$set(echo = TRUE)
 
 **Task** Create a codeblock and load appropriate packages and settings for this lab.
 
+```{r}
+library(tidyverse)
+library(tigris)
+```
+
 ## Questions
 
 **Q1.** You got a tip that there are some unusual patterns among applicants listing barber shops as their occupation. Which state has the most PPP applications from barber shops, and how many of those have undisbursed amounts greater than $0? Which state has the most undisbursed applications?
@@ -42,11 +47,57 @@ You MUST do the following things when answering this question:
 * Publish your chart (you may need to confirm your Datawrapper account if you haven't already in order to do this)
 * Put the answer below along with the URL of your chart.
 
-**A1.**
+**A1.** The state with the most PPP loans and undisbursed loans greater than zero from barber shops is Illinois. Of the 11,080 PPP loans from barber shops in Illinos, 1,713 were undisbursed.
+
+Chart: https://datawrapper.dwcdn.net/7dfr4/3/
+
+```{r}
+
+barbershops_ppp <- read_csv("data/barber_shops_ppp.csv")
+
+# total applications per state
+state_barbershops_ppp <- barbershops_ppp %>%
+  group_by(state) %>%
+  summarise(num_loans=n())
+
+# total applications per state, undisbursed amount > 0
+undisbursed_barbershops_ppp <- barbershops_ppp %>%
+  filter(undisbursed_amount > 0) %>%
+  group_by(state) %>%
+  summarise(num_undisbursed=n())
+
+# join dataframes
+joined_barbershops_ppp <- state_barbershops_ppp %>%
+  right_join(undisbursed_barbershops_ppp, by="state") %>%
+  rename(total_num_loans = num_loans,
+         total_undisbursed_loans = num_undisbursed)
+
+# top 10
+top_10_total_apps <- joined_barbershops_ppp %>%
+  arrange(desc(total_num_loans)) %>%
+  head(10)
+  
+# export
+write_csv(top_10_total_apps, "data/top_10_states_total_ppp.csv")
+
+```
 
 **Q2.** Using Datawrapper, make a different (ideally better) version of the chart you made above. TO BE CLEAR: this new graphic should show information about states and loans with undisbursed amounts, so don't, for example, focus on a single state. To do this, you MUST go back in R and do any calculations or add additional data to make the chart more effective or answer the above question in a different way. Your chart MUST be different in that it cannot be a bar chart showing the counts of total and undisbursed applications by state. It could be a bar chart showing another calculation or metric, or a scatterplot, or some other form. Follow the same general guidelines as above for the chart's visual elements, and publish it and including the URL below, along with an explanation of how this chart is different from the first one and how you decided what to do.
 
-**A2.**
+**A2.** This chart is different from the first one because it highlights the percent of undisbursed barber shop loans for the top 10 U.S. states/territories. The data is also arranged by the percent undisbursed, which changed what states and territories came out on top. In the first chart, Illinois comes out on top as the state with the most PPP loans and undisbursed loans from barber shops. But when the data is further analyzed and put into a new context, the Northern Mariana Islands came out on top and Illinois dropped down to ninth place. This new chart better highlights the odd patterns we were trying to find in the first question.
+
+Chart: https://datawrapper.dwcdn.net/bzXNP/3/
+
+```{r}
+
+percent_undisbursed_barbers <- joined_barbershops_ppp %>% 
+  mutate(percent_undisbursed = (total_undisbursed_loans/total_num_loans)*100) %>% 
+  arrange(desc(percent_undisbursed)) %>% 
+  head(10)
+
+write_csv(percent_undisbursed_barbers, "data/top_10_percent_undisbursed_barbers.csv")
+
+```
 
 **Q3.** The online lender Kabbage, Inc. is featured in the [ProPublica PPP fake farms story](https://www.propublica.org/article/ppp-farms). To show where Kabbage was lending money, make a county-level map that shows the percentage of loans in each county that were Kabbage loans. To do this, make a codeblock and do the following:
 
@@ -59,4 +110,34 @@ You MUST do the following things when answering this question:
 7. Make a county-level map using that exported CSV file that displays the percentage of Kabbage loans. Style it so that the tooltip displays the county and the percentage, and format all percentages shown on the map so that they appear with one decimal point (such as 3.4%). Follow the same general guidelines as above for the chart's visual elements, and give the map a title, description and source. Provide a legend caption and format the percentage in the same way as on the tooltips.
 8. In the answer space below, provide the URL for your published map and then describe where Kabbage loans are and are not found. Where are they more common? Look specifically at Florida in the data: are there counties on the map where no data is displayed? Why?
 
-**A3.**  
+**A3.**  The Kabbage loans are found in greater concentrations on the east coast, especially in Florida, Georgia, South Carolina, Virginia, and New Jersey. There were also a few states such as California, Nevada, North Dakota, South Dakota, and North Carolina that did not have any Kabbage loans. Out of the entire United States, Florida seems to have the most Kabbage loans. The Florida county with the most Kabbage loans is Liberty County with approximately 6.8%. There are some counties across the country that have no data displayed such as De Soto County in Florida, but that's because there was no FIPS code associated with the jurisdiction.
+
+Map: https://datawrapper.dwcdn.net/5hvaU/2/
+
+```{r}
+
+kabbage_counties <- read_csv("data/kabbage_counties.csv")
+all_counties <- read_csv("data/all_counties.csv")
+
+# join dataframes + calculate percent
+kabbage_counties_joined <- all_counties %>% 
+  left_join(kabbage_counties,
+  by=c('project_county_name'='project_county_name','project_state'='project_state')) %>% 
+  rename( 
+    kabbage_loans = total.y,
+    all_loans = total.x) %>% 
+  mutate(percent_kabbage = (kabbage_loans/all_loans)*100)
+
+county_fips <- read_csv("data/county_fips.csv")
+
+# join w/ kabbage_counties_joined df, remove zeros
+kabbage_counties_fips <- kabbage_counties_joined %>%
+  left_join(county_fips, by=c('project_county_name'='match_county','project_state'='state')) %>% 
+  mutate(kabbage_loans = case_when(is.na(kabbage_loans) ~ 0, TRUE ~ kabbage_loans)) %>% 
+  mutate( percent_kabbage = case_when(
+    is.na( percent_kabbage) ~ 0,
+    TRUE ~  percent_kabbage))
+
+# export
+write_csv(kabbage_counties_fips, "data/kabbage_counties_fips.csv")
+```

@@ -37,7 +37,7 @@ You'll need your Census API Key:
 ```{r echo=FALSE}
 
 census_api_key("8b69f2765f65670c2183febdffce6afc73c72101", install=TRUE, overwrite=TRUE)
-readRenviron("~/.Renviron")`
+readRenviron("~/.Renviron")
 
 ```
 

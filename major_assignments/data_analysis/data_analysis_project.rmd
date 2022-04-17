@@ -47,6 +47,8 @@ incarcerated_pop %>%
 # LA	West Feliciana Parish	34.5133899		
 # GA	Wheeler County 31.6155802
 
+mean(incarcerated_pop$percent_incarcerated_20) # = 1.404581
+
 incarcerated_pop %>%
   arrange(desc(percent_incarcerated_10)) %>%
   select(state, county, percent_incarcerated_10)
@@ -58,6 +60,8 @@ incarcerated_pop %>%
 # CO	Bent County	32.2818895		
 # TX	Garza County	30.8775731	
 
+mean(incarcerated_pop$percent_incarcerated_10) # = 1.458736
+
 incarcerated_pop %>%
   arrange(desc(percent_incarcerated_00)) %>%
   select(state, county, percent_incarcerated_00)
@@ -68,6 +72,10 @@ incarcerated_pop %>%
 # TX	Concho County	32.7534039		
 # FL	Union County	30.2112781		
 # IL	Brown County	27.5107914
+
+mean(incarcerated_pop$percent_incarcerated_00) # = 1.19643
+
+# findings -> average percent of incarcerated adult population has gone down since 2000, Crowley County + West Feliciana Parish are on every top 5 list
 
 ```
 ## State & Territory Dataframes

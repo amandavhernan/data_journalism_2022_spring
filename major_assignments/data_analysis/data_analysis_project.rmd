@@ -1,0 +1,179 @@
+---
+title: "Data Analysis Project"
+author: "Amanda Hernandez"
+date: "4/16/2022"
+output: html_notebook
+---
+
+## Loading Packages
+
+```{r}
+
+library(tidyverse)
+library(tidycensus)
+library(dplyr)
+library(sf)
+library(tigris)
+
+census_api_key("8b69f2765f65670c2183febdffce6afc73c72101", install=TRUE, overwrite=TRUE)
+readRenviron("~/.Renviron")
+
+```
+
+## Data Prep
+
+```{r}
+
+incarcerated_pop <- read_csv("data/census_incarceration.csv")
+
+nrow(incarcerated_pop) # 3211 records
+ncol(incarcerated_pop) # 9 columns/variables
+
+# add percent of pop incarcerated (2000, 2010, 2020)
+
+incarcerated_pop <- incarcerated_pop %>%
+  mutate(percent_incarcerated_20 = (incarcerated_20/total_population_20)*100) %>%
+  mutate(percent_incarcerated_10 = (incarcerated_10/total_population_10)*100) %>%
+  mutate(percent_incarcerated_00 = (incarcerated_00/total_population_00)*100)
+
+incarcerated_pop %>%
+  arrange(desc(percent_incarcerated_20)) %>%
+  select(state, county, percent_incarcerated_20)
+
+# 2020
+# CO	Crowley County	48.1256332		
+# PA	Forest County	38.0467518		
+# MS	Issaquena County	36.8460389		
+# LA	West Feliciana Parish	34.5133899		
+# GA	Wheeler County 31.6155802
+
+incarcerated_pop %>%
+  arrange(desc(percent_incarcerated_10)) %>%
+  select(state, county, percent_incarcerated_10)
+
+# 2010
+# CO	Crowley County	45.6294007		
+# TX	Concho County	38.0719354		
+# LA	West Feliciana Parish	33.0944000		
+# CO	Bent County	32.2818895		
+# TX	Garza County	30.8775731	
+
+incarcerated_pop %>%
+  arrange(desc(percent_incarcerated_00)) %>%
+  select(state, county, percent_incarcerated_00)
+
+# 2000
+# CO	Crowley County	35.4295034		
+# LA	West Feliciana Parish	33.2340679		
+# TX	Concho County	32.7534039		
+# FL	Union County	30.2112781		
+# IL	Brown County	27.5107914
+
+```
+## State & Territory Dataframes
+
+```{r}
+
+# dataframes for each state or territory
+
+massachusetts <- subset(incarcerated_pop, state == "MA")
+connecticut <- subset(incarcerated_pop, state == "CT")
+west_virginia <- subset(incarcerated_pop, state == "WV")
+vermont <- subset(incarcerated_pop, state == "VT")
+rhode_island <- subset(incarcerated_pop, state == "RI")
+washington_dc <- subset(incarcerated_pop, state == "DC")
+pennsylvania <- subset(incarcerated_pop, state == "PA")
+arkansas <- subset(incarcerated_pop, state == "AR")
+oklahoma <- subset(incarcerated_pop, state == "OK")
+nebraska <- subset(incarcerated_pop, state == "NE")
+idaho <- subset(incarcerated_pop, state == "ID")
+missouri <- subset(incarcerated_pop, state == "MO")
+louisiana <- subset(incarcerated_pop, state == "LA")
+utah <- subset(incarcerated_pop, state == "UT")
+arizona <- subset(incarcerated_pop, state == "AZ")
+south_carolina <- subset(incarcerated_pop, state == "SC")
+georgia <- subset(incarcerated_pop, state == "GA")
+tennessee <- subset(incarcerated_pop, state == "TN")
+new_york <- subset(incarcerated_pop, state == "NY")
+mississippi <- subset(incarcerated_pop, state == "MS")
+new_mexico <- subset(incarcerated_pop, state == "NM")
+illinois <- subset(incarcerated_pop, state == "IL")
+michigan <- subset(incarcerated_pop, state == "MI")
+maine <- subset(incarcerated_pop, state == "ME")
+indiana <- subset(incarcerated_pop, state == "IN")
+north_carolina <- subset(incarcerated_pop, state == "NC")
+delaware <- subset(incarcerated_pop, state == "DE")
+texas <- subset(incarcerated_pop, state == "TX")
+alabama <- subset(incarcerated_pop, state == "AL")
+california <- subset(incarcerated_pop, state == "CA")
+virginia <- subset(incarcerated_pop, state == "VA")
+south_dakota <- subset(incarcerated_pop, state == "SD")
+montana <- subset(incarcerated_pop, state == "MT")
+new_jersey <- subset(incarcerated_pop, state == "NJ")
+hawaii <- subset(incarcerated_pop, state == "HI")
+ohio <- subset(incarcerated_pop, state == "OH")
+minnesota <- subset(incarcerated_pop, state == "MN")
+oregon <- subset(incarcerated_pop, state == "OR")
+north_dakota <- subset(incarcerated_pop, state == "ND")
+kentucky <- subset(incarcerated_pop, state == "KY")
+new_hampshire <- subset(incarcerated_pop, state == "NH")
+colorado <- subset(incarcerated_pop, state == "CO")
+washington <- subset(incarcerated_pop, state == "WA")
+alaska <- subset(incarcerated_pop, state == "AK")
+wyoming <- subset(incarcerated_pop, state == "WY")
+iowa <- subset(incarcerated_pop, state == "IA")
+wisconsin <- subset(incarcerated_pop, state == "WI")
+puerto_rico <- subset(incarcerated_pop, state == "PR")
+florida <- subset(incarcerated_pop, state == "FL")
+kansas <- subset(incarcerated_pop, state == "KS")
+nevada <- subset(incarcerated_pop, state == "NV")
+maryland <- subset(incarcerated_pop, state == "MD")
+
+```
+
+## Calculating State Incarceration Rates
+
+```{r}
+
+# Maryland
+
+md_geo <- get_acs(geography = "county",
+      variables = c(population = "B01001_001"),
+      state = "MD",
+      geometry = TRUE)
+
+md_geo <- md_geo %>% 
+  select(-variable, -estimate, -moe) %>%
+  rename(geoid = GEOID) %>%
+  rename(county = NAME) %>%
+  mutate(county = str_remove_all(county,", Maryland"))
+
+# total state pop + incarceration rate 2020
+
+maryland <- maryland %>%
+  mutate(total_state_pop_20 = sum(total_population_20)) %>%
+  mutate(total_incarcerated_20 = sum(incarcerated_20)) %>%
+  mutate(incarceration_rate_20 = total_incarcerated_20/total_state_pop_20*100000)
+
+# join dataframes
+
+maryland <- maryland %>%
+  left_join(md_geo, by="county")
+
+# map prep
+
+options(tigris_use_cache = TRUE)
+
+counties <- counties()
+
+md_counties <- counties %>%
+  filter(STATEFP == "24")
+
+# map
+
+ggplot() + 
+  geom_sf(data=maryland, aes(fill=incarceration_rate_20)) +
+  theme_minimal() +
+  scale_fill_viridis_b(option="magma",trans = "log") 
+
+```

@@ -180,7 +180,7 @@ md_counties <- counties %>%
 # map
 
 ggplot() + 
-  geom_sf(data=maryland, aes(fill=incarceration_rate_20)) +
+  geom_sf(data=maryland, aes(geometry = geometry, fill=incarceration_rate_20)) +
   theme_minimal() +
   scale_fill_viridis_b(option="magma",trans = "log") 
 

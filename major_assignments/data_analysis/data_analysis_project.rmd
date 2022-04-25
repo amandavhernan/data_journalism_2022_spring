@@ -5,7 +5,7 @@ date: "4/16/2022"
 output: html_notebook
 ---
 
-## Loading Packages
+### Loading Packages
 
 ```{r}
 
@@ -14,17 +14,19 @@ library(tidycensus)
 library(dplyr)
 library(sf)
 library(tigris)
+library(ggplot2)
 
 census_api_key("8b69f2765f65670c2183febdffce6afc73c72101", install=TRUE, overwrite=TRUE)
 readRenviron("~/.Renviron")
 
 ```
 
-## Data Prep
+### Data Prep & Exploration
 
 ```{r}
 
-incarcerated_pop <- read_csv("data/census_incarceration.csv")
+incarcerated_pop <- read_csv("data/census_incarceration.csv") %>%
+  rename(fips = FIPS)
 
 nrow(incarcerated_pop) # 3211 records
 ncol(incarcerated_pop) # 9 columns/variables
@@ -75,71 +77,563 @@ incarcerated_pop %>%
 
 mean(incarcerated_pop$percent_incarcerated_00) # = 1.19643
 
-# findings -> average percent of incarcerated adult population has gone down since 2000, Crowley County + West Feliciana Parish are on every top 5 list
+# Findings:
+# Average percent of incarcerated adult population has gone down nationwide since 2000. Crowley County and West Feliciana Parish are on every top five list.
 
 ```
-## State & Territory Dataframes
+
+### Create State Dataframes & Calculate Incarceration Rates
 
 ```{r}
 
-# dataframes for each state or territory
+# dataframes for each state w/ total pop, total incarcerated, state incarceration rate, percent incarcerated (2000-2020)
 
-massachusetts <- subset(incarcerated_pop, state == "MA")
-connecticut <- subset(incarcerated_pop, state == "CT")
-west_virginia <- subset(incarcerated_pop, state == "WV")
-vermont <- subset(incarcerated_pop, state == "VT")
-rhode_island <- subset(incarcerated_pop, state == "RI")
-washington_dc <- subset(incarcerated_pop, state == "DC")
-pennsylvania <- subset(incarcerated_pop, state == "PA")
-arkansas <- subset(incarcerated_pop, state == "AR")
-oklahoma <- subset(incarcerated_pop, state == "OK")
-nebraska <- subset(incarcerated_pop, state == "NE")
-idaho <- subset(incarcerated_pop, state == "ID")
-missouri <- subset(incarcerated_pop, state == "MO")
-louisiana <- subset(incarcerated_pop, state == "LA")
-utah <- subset(incarcerated_pop, state == "UT")
-arizona <- subset(incarcerated_pop, state == "AZ")
-south_carolina <- subset(incarcerated_pop, state == "SC")
-georgia <- subset(incarcerated_pop, state == "GA")
-tennessee <- subset(incarcerated_pop, state == "TN")
-new_york <- subset(incarcerated_pop, state == "NY")
-mississippi <- subset(incarcerated_pop, state == "MS")
-new_mexico <- subset(incarcerated_pop, state == "NM")
-illinois <- subset(incarcerated_pop, state == "IL")
-michigan <- subset(incarcerated_pop, state == "MI")
-maine <- subset(incarcerated_pop, state == "ME")
-indiana <- subset(incarcerated_pop, state == "IN")
-north_carolina <- subset(incarcerated_pop, state == "NC")
-delaware <- subset(incarcerated_pop, state == "DE")
-texas <- subset(incarcerated_pop, state == "TX")
-alabama <- subset(incarcerated_pop, state == "AL")
-california <- subset(incarcerated_pop, state == "CA")
-virginia <- subset(incarcerated_pop, state == "VA")
-south_dakota <- subset(incarcerated_pop, state == "SD")
-montana <- subset(incarcerated_pop, state == "MT")
-new_jersey <- subset(incarcerated_pop, state == "NJ")
-hawaii <- subset(incarcerated_pop, state == "HI")
-ohio <- subset(incarcerated_pop, state == "OH")
-minnesota <- subset(incarcerated_pop, state == "MN")
-oregon <- subset(incarcerated_pop, state == "OR")
-north_dakota <- subset(incarcerated_pop, state == "ND")
-kentucky <- subset(incarcerated_pop, state == "KY")
-new_hampshire <- subset(incarcerated_pop, state == "NH")
-colorado <- subset(incarcerated_pop, state == "CO")
-washington <- subset(incarcerated_pop, state == "WA")
-alaska <- subset(incarcerated_pop, state == "AK")
-wyoming <- subset(incarcerated_pop, state == "WY")
-iowa <- subset(incarcerated_pop, state == "IA")
-wisconsin <- subset(incarcerated_pop, state == "WI")
-puerto_rico <- subset(incarcerated_pop, state == "PR")
-florida <- subset(incarcerated_pop, state == "FL")
-kansas <- subset(incarcerated_pop, state == "KS")
-nevada <- subset(incarcerated_pop, state == "NV")
-maryland <- subset(incarcerated_pop, state == "MD")
+massachusetts <- subset(incarcerated_pop, state == "MA") %>%
+  mutate(total_state_pop_20 = sum(total_population_20)) %>%
+  mutate(total_incarcerated_20 = sum(incarcerated_20)) %>%
+  mutate(state_incarceration_rate_20 = total_incarcerated_20/total_state_pop_20*100000) %>%
+  mutate(total_percent_incarcerated_20 = sum(percent_incarcerated_20)) %>%
+  mutate(total_percent_incarcerated_10 = sum(percent_incarcerated_10)) %>%
+  mutate(total_percent_incarcerated_00 = sum(percent_incarcerated_00))
+
+connecticut <- subset(incarcerated_pop, state == "CT") %>%
+  mutate(total_state_pop_20 = sum(total_population_20)) %>%
+  mutate(total_incarcerated_20 = sum(incarcerated_20)) %>%
+  mutate(state_incarceration_rate_20 = total_incarcerated_20/total_state_pop_20*100000) %>%
+  mutate(total_percent_incarcerated_20 = sum(percent_incarcerated_20)) %>%
+  mutate(total_percent_incarcerated_10 = sum(percent_incarcerated_10)) %>%
+  mutate(total_percent_incarcerated_00 = sum(percent_incarcerated_00))
+
+west_virginia <- subset(incarcerated_pop, state == "WV") %>%
+  mutate(total_state_pop_20 = sum(total_population_20)) %>%
+  mutate(total_incarcerated_20 = sum(incarcerated_20)) %>%
+  mutate(state_incarceration_rate_20 = total_incarcerated_20/total_state_pop_20*100000) %>%
+  mutate(total_percent_incarcerated_20 = sum(percent_incarcerated_20)) %>%
+  mutate(total_percent_incarcerated_10 = sum(percent_incarcerated_10)) %>%
+  mutate(total_percent_incarcerated_00 = sum(percent_incarcerated_00))
+
+vermont <- subset(incarcerated_pop, state == "VT") %>%
+  mutate(total_state_pop_20 = sum(total_population_20)) %>%
+  mutate(total_incarcerated_20 = sum(incarcerated_20)) %>%
+  mutate(state_incarceration_rate_20 = total_incarcerated_20/total_state_pop_20*100000) %>%
+  mutate(total_percent_incarcerated_20 = sum(percent_incarcerated_20)) %>%
+  mutate(total_percent_incarcerated_10 = sum(percent_incarcerated_10)) %>%
+  mutate(total_percent_incarcerated_00 = sum(percent_incarcerated_00))
+
+rhode_island <- subset(incarcerated_pop, state == "RI") %>%
+  mutate(total_state_pop_20 = sum(total_population_20)) %>%
+  mutate(total_incarcerated_20 = sum(incarcerated_20)) %>%
+  mutate(state_incarceration_rate_20 = total_incarcerated_20/total_state_pop_20*100000) %>%
+  mutate(total_percent_incarcerated_20 = sum(percent_incarcerated_20)) %>%
+  mutate(total_percent_incarcerated_10 = sum(percent_incarcerated_10)) %>%
+  mutate(total_percent_incarcerated_00 = sum(percent_incarcerated_00))
+
+washington_dc <- subset(incarcerated_pop, state == "DC") %>%
+  mutate(total_state_pop_20 = sum(total_population_20)) %>%
+  mutate(total_incarcerated_20 = sum(incarcerated_20)) %>%
+  mutate(state_incarceration_rate_20 = total_incarcerated_20/total_state_pop_20*100000) %>%
+  mutate(total_percent_incarcerated_20 = sum(percent_incarcerated_20)) %>%
+  mutate(total_percent_incarcerated_10 = sum(percent_incarcerated_10)) %>%
+  mutate(total_percent_incarcerated_00 = sum(percent_incarcerated_00))
+
+pennsylvania <- subset(incarcerated_pop, state == "PA") %>%
+  mutate(total_state_pop_20 = sum(total_population_20)) %>%
+  mutate(total_incarcerated_20 = sum(incarcerated_20)) %>%
+  mutate(state_incarceration_rate_20 = total_incarcerated_20/total_state_pop_20*100000) %>%
+  mutate(total_percent_incarcerated_20 = sum(percent_incarcerated_20)) %>%
+  mutate(total_percent_incarcerated_10 = sum(percent_incarcerated_10)) %>%
+  mutate(total_percent_incarcerated_00 = sum(percent_incarcerated_00))
+
+arkansas <- subset(incarcerated_pop, state == "AR") %>%
+  mutate(total_state_pop_20 = sum(total_population_20)) %>%
+  mutate(total_incarcerated_20 = sum(incarcerated_20)) %>%
+  mutate(state_incarceration_rate_20 = total_incarcerated_20/total_state_pop_20*100000) %>%
+  mutate(total_percent_incarcerated_20 = sum(percent_incarcerated_20)) %>%
+  mutate(total_percent_incarcerated_10 = sum(percent_incarcerated_10)) %>%
+  mutate(total_percent_incarcerated_00 = sum(percent_incarcerated_00))
+
+oklahoma <- subset(incarcerated_pop, state == "OK") %>%
+  mutate(total_state_pop_20 = sum(total_population_20)) %>%
+  mutate(total_incarcerated_20 = sum(incarcerated_20)) %>%
+  mutate(state_incarceration_rate_20 = total_incarcerated_20/total_state_pop_20*100000) %>%
+  mutate(total_percent_incarcerated_20 = sum(percent_incarcerated_20)) %>%
+  mutate(total_percent_incarcerated_10 = sum(percent_incarcerated_10)) %>%
+  mutate(total_percent_incarcerated_00 = sum(percent_incarcerated_00))
+
+nebraska <- subset(incarcerated_pop, state == "NE") %>%
+  mutate(total_state_pop_20 = sum(total_population_20)) %>%
+  mutate(total_incarcerated_20 = sum(incarcerated_20)) %>%
+  mutate(state_incarceration_rate_20 = total_incarcerated_20/total_state_pop_20*100000) %>%
+  mutate(total_percent_incarcerated_20 = sum(percent_incarcerated_20)) %>%
+  mutate(total_percent_incarcerated_10 = sum(percent_incarcerated_10)) %>%
+  mutate(total_percent_incarcerated_00 = sum(percent_incarcerated_00))
+
+idaho <- subset(incarcerated_pop, state == "ID") %>%
+  mutate(total_state_pop_20 = sum(total_population_20)) %>%
+  mutate(total_incarcerated_20 = sum(incarcerated_20)) %>%
+  mutate(state_incarceration_rate_20 = total_incarcerated_20/total_state_pop_20*100000) %>%
+  mutate(total_percent_incarcerated_20 = sum(percent_incarcerated_20)) %>%
+  mutate(total_percent_incarcerated_10 = sum(percent_incarcerated_10)) %>%
+  mutate(total_percent_incarcerated_00 = sum(percent_incarcerated_00))
+
+missouri <- subset(incarcerated_pop, state == "MO") %>%
+  mutate(total_state_pop_20 = sum(total_population_20)) %>%
+  mutate(total_incarcerated_20 = sum(incarcerated_20)) %>%
+  mutate(state_incarceration_rate_20 = total_incarcerated_20/total_state_pop_20*100000) %>%
+  mutate(total_percent_incarcerated_20 = sum(percent_incarcerated_20)) %>%
+  mutate(total_percent_incarcerated_10 = sum(percent_incarcerated_10)) %>%
+  mutate(total_percent_incarcerated_00 = sum(percent_incarcerated_00))
+
+louisiana <- subset(incarcerated_pop, state == "LA") %>%
+  mutate(total_state_pop_20 = sum(total_population_20)) %>%
+  mutate(total_incarcerated_20 = sum(incarcerated_20)) %>%
+  mutate(state_incarceration_rate_20 = total_incarcerated_20/total_state_pop_20*100000) %>%
+  mutate(total_percent_incarcerated_20 = sum(percent_incarcerated_20)) %>%
+  mutate(total_percent_incarcerated_10 = sum(percent_incarcerated_10)) %>%
+  mutate(total_percent_incarcerated_00 = sum(percent_incarcerated_00))
+
+utah <- subset(incarcerated_pop, state == "UT") %>%
+  mutate(total_state_pop_20 = sum(total_population_20)) %>%
+  mutate(total_incarcerated_20 = sum(incarcerated_20)) %>%
+  mutate(state_incarceration_rate_20 = total_incarcerated_20/total_state_pop_20*100000) %>%
+  mutate(total_percent_incarcerated_20 = sum(percent_incarcerated_20)) %>%
+  mutate(total_percent_incarcerated_10 = sum(percent_incarcerated_10)) %>%
+  mutate(total_percent_incarcerated_00 = sum(percent_incarcerated_00))
+
+arizona <- subset(incarcerated_pop, state == "AZ") %>%
+  mutate(total_state_pop_20 = sum(total_population_20)) %>%
+  mutate(total_incarcerated_20 = sum(incarcerated_20)) %>%
+  mutate(state_incarceration_rate_20 = total_incarcerated_20/total_state_pop_20*100000) %>%
+  mutate(total_percent_incarcerated_20 = sum(percent_incarcerated_20)) %>%
+  mutate(total_percent_incarcerated_10 = sum(percent_incarcerated_10)) %>%
+  mutate(total_percent_incarcerated_00 = sum(percent_incarcerated_00))
+
+south_carolina <- subset(incarcerated_pop, state == "SC") %>%
+  mutate(total_state_pop_20 = sum(total_population_20)) %>%
+  mutate(total_incarcerated_20 = sum(incarcerated_20)) %>%
+  mutate(state_incarceration_rate_20 = total_incarcerated_20/total_state_pop_20*100000) %>%
+  mutate(total_percent_incarcerated_20 = sum(percent_incarcerated_20)) %>%
+  mutate(total_percent_incarcerated_10 = sum(percent_incarcerated_10)) %>%
+  mutate(total_percent_incarcerated_00 = sum(percent_incarcerated_00))
+
+georgia <- subset(incarcerated_pop, state == "GA") %>%
+  mutate(total_state_pop_20 = sum(total_population_20)) %>%
+  mutate(total_incarcerated_20 = sum(incarcerated_20)) %>%
+  mutate(state_incarceration_rate_20 = total_incarcerated_20/total_state_pop_20*100000) %>%
+  mutate(total_percent_incarcerated_20 = sum(percent_incarcerated_20)) %>%
+  mutate(total_percent_incarcerated_10 = sum(percent_incarcerated_10)) %>%
+  mutate(total_percent_incarcerated_00 = sum(percent_incarcerated_00))
+
+tennessee <- subset(incarcerated_pop, state == "TN") %>%
+  mutate(total_state_pop_20 = sum(total_population_20)) %>%
+  mutate(total_incarcerated_20 = sum(incarcerated_20)) %>%
+  mutate(state_incarceration_rate_20 = total_incarcerated_20/total_state_pop_20*100000) %>%
+  mutate(total_percent_incarcerated_20 = sum(percent_incarcerated_20)) %>%
+  mutate(total_percent_incarcerated_10 = sum(percent_incarcerated_10)) %>%
+  mutate(total_percent_incarcerated_00 = sum(percent_incarcerated_00))
+
+new_york <- subset(incarcerated_pop, state == "NY") %>%
+  mutate(total_state_pop_20 = sum(total_population_20)) %>%
+  mutate(total_incarcerated_20 = sum(incarcerated_20)) %>%
+  mutate(state_incarceration_rate_20 = total_incarcerated_20/total_state_pop_20*100000) %>%
+  mutate(total_percent_incarcerated_20 = sum(percent_incarcerated_20)) %>%
+  mutate(total_percent_incarcerated_10 = sum(percent_incarcerated_10)) %>%
+  mutate(total_percent_incarcerated_00 = sum(percent_incarcerated_00))
+
+mississippi <- subset(incarcerated_pop, state == "MS") %>%
+  mutate(total_state_pop_20 = sum(total_population_20)) %>%
+  mutate(total_incarcerated_20 = sum(incarcerated_20)) %>%
+  mutate(state_incarceration_rate_20 = total_incarcerated_20/total_state_pop_20*100000) %>%
+  mutate(total_percent_incarcerated_20 = sum(percent_incarcerated_20)) %>%
+  mutate(total_percent_incarcerated_10 = sum(percent_incarcerated_10)) %>%
+  mutate(total_percent_incarcerated_00 = sum(percent_incarcerated_00))
+
+new_mexico <- subset(incarcerated_pop, state == "NM") %>%
+  mutate(total_state_pop_20 = sum(total_population_20)) %>%
+  mutate(total_incarcerated_20 = sum(incarcerated_20)) %>%
+  mutate(state_incarceration_rate_20 = total_incarcerated_20/total_state_pop_20*100000) %>%
+  mutate(total_percent_incarcerated_20 = sum(percent_incarcerated_20)) %>%
+  mutate(total_percent_incarcerated_10 = sum(percent_incarcerated_10)) %>%
+  mutate(total_percent_incarcerated_00 = sum(percent_incarcerated_00))
+
+illinois <- subset(incarcerated_pop, state == "IL") %>%
+  mutate(total_state_pop_20 = sum(total_population_20)) %>%
+  mutate(total_incarcerated_20 = sum(incarcerated_20)) %>%
+  mutate(state_incarceration_rate_20 = total_incarcerated_20/total_state_pop_20*100000) %>%
+  mutate(total_percent_incarcerated_20 = sum(percent_incarcerated_20)) %>%
+  mutate(total_percent_incarcerated_10 = sum(percent_incarcerated_10)) %>%
+  mutate(total_percent_incarcerated_00 = sum(percent_incarcerated_00))
+
+michigan <- subset(incarcerated_pop, state == "MI") %>%
+  mutate(total_state_pop_20 = sum(total_population_20)) %>%
+  mutate(total_incarcerated_20 = sum(incarcerated_20)) %>%
+  mutate(state_incarceration_rate_20 = total_incarcerated_20/total_state_pop_20*100000) %>%
+  mutate(total_percent_incarcerated_20 = sum(percent_incarcerated_20)) %>%
+  mutate(total_percent_incarcerated_10 = sum(percent_incarcerated_10)) %>%
+  mutate(total_percent_incarcerated_00 = sum(percent_incarcerated_00))
+
+maine <- subset(incarcerated_pop, state == "ME") %>%
+  mutate(total_state_pop_20 = sum(total_population_20)) %>%
+  mutate(total_incarcerated_20 = sum(incarcerated_20)) %>%
+  mutate(state_incarceration_rate_20 = total_incarcerated_20/total_state_pop_20*100000) %>%
+  mutate(total_percent_incarcerated_20 = sum(percent_incarcerated_20)) %>%
+  mutate(total_percent_incarcerated_10 = sum(percent_incarcerated_10)) %>%
+  mutate(total_percent_incarcerated_00 = sum(percent_incarcerated_00))
+
+indiana <- subset(incarcerated_pop, state == "IN") %>%
+  mutate(total_state_pop_20 = sum(total_population_20)) %>%
+  mutate(total_incarcerated_20 = sum(incarcerated_20)) %>%
+  mutate(state_incarceration_rate_20 = total_incarcerated_20/total_state_pop_20*100000) %>%
+  mutate(total_percent_incarcerated_20 = sum(percent_incarcerated_20)) %>%
+  mutate(total_percent_incarcerated_10 = sum(percent_incarcerated_10)) %>%
+  mutate(total_percent_incarcerated_00 = sum(percent_incarcerated_00))
+
+north_carolina <- subset(incarcerated_pop, state == "NC") %>%
+  mutate(total_state_pop_20 = sum(total_population_20)) %>%
+  mutate(total_incarcerated_20 = sum(incarcerated_20)) %>%
+  mutate(state_incarceration_rate_20 = total_incarcerated_20/total_state_pop_20*100000) %>%
+  mutate(total_percent_incarcerated_20 = sum(percent_incarcerated_20)) %>%
+  mutate(total_percent_incarcerated_10 = sum(percent_incarcerated_10)) %>%
+  mutate(total_percent_incarcerated_00 = sum(percent_incarcerated_00))
+
+delaware <- subset(incarcerated_pop, state == "DE") %>%
+  mutate(total_state_pop_20 = sum(total_population_20)) %>%
+  mutate(total_incarcerated_20 = sum(incarcerated_20)) %>%
+  mutate(state_incarceration_rate_20 = total_incarcerated_20/total_state_pop_20*100000) %>%
+  mutate(total_percent_incarcerated_20 = sum(percent_incarcerated_20)) %>%
+  mutate(total_percent_incarcerated_10 = sum(percent_incarcerated_10)) %>%
+  mutate(total_percent_incarcerated_00 = sum(percent_incarcerated_00))
+
+texas <- subset(incarcerated_pop, state == "TX") %>%
+  mutate(total_state_pop_20 = sum(total_population_20)) %>%
+  mutate(total_incarcerated_20 = sum(incarcerated_20)) %>%
+  mutate(state_incarceration_rate_20 = total_incarcerated_20/total_state_pop_20*100000) %>%
+  mutate(total_percent_incarcerated_20 = sum(percent_incarcerated_20)) %>%
+  mutate(total_percent_incarcerated_10 = sum(percent_incarcerated_10)) %>%
+  mutate(total_percent_incarcerated_00 = sum(percent_incarcerated_00))
+
+alabama <- subset(incarcerated_pop, state == "AL") %>%
+  mutate(total_state_pop_20 = sum(total_population_20)) %>%
+  mutate(total_incarcerated_20 = sum(incarcerated_20)) %>%
+  mutate(state_incarceration_rate_20 = total_incarcerated_20/total_state_pop_20*100000) %>%
+  mutate(total_percent_incarcerated_20 = sum(percent_incarcerated_20)) %>%
+  mutate(total_percent_incarcerated_10 = sum(percent_incarcerated_10)) %>%
+  mutate(total_percent_incarcerated_00 = sum(percent_incarcerated_00))
+
+california <- subset(incarcerated_pop, state == "CA") %>%
+  mutate(total_state_pop_20 = sum(total_population_20)) %>%
+  mutate(total_incarcerated_20 = sum(incarcerated_20)) %>%
+  mutate(state_incarceration_rate_20 = total_incarcerated_20/total_state_pop_20*100000) %>%
+  mutate(total_percent_incarcerated_20 = sum(percent_incarcerated_20)) %>%
+  mutate(total_percent_incarcerated_10 = sum(percent_incarcerated_10)) %>%
+  mutate(total_percent_incarcerated_00 = sum(percent_incarcerated_00))
+
+virginia <- subset(incarcerated_pop, state == "VA") %>%
+  mutate(total_state_pop_20 = sum(total_population_20)) %>%
+  mutate(total_incarcerated_20 = sum(incarcerated_20)) %>%
+  mutate(state_incarceration_rate_20 = total_incarcerated_20/total_state_pop_20*100000) %>%
+  mutate(total_percent_incarcerated_20 = sum(percent_incarcerated_20)) %>%
+  mutate(total_percent_incarcerated_10 = sum(percent_incarcerated_10)) %>%
+  mutate(total_percent_incarcerated_00 = sum(percent_incarcerated_00))
+
+south_dakota <- subset(incarcerated_pop, state == "SD") %>%
+  mutate(total_state_pop_20 = sum(total_population_20)) %>%
+  mutate(total_incarcerated_20 = sum(incarcerated_20)) %>%
+  mutate(state_incarceration_rate_20 = total_incarcerated_20/total_state_pop_20*100000) %>%
+  mutate(total_percent_incarcerated_20 = sum(percent_incarcerated_20)) %>%
+  mutate(total_percent_incarcerated_10 = sum(percent_incarcerated_10)) %>%
+  mutate(total_percent_incarcerated_00 = sum(percent_incarcerated_00))
+
+montana <- subset(incarcerated_pop, state == "MT") %>%
+  mutate(total_state_pop_20 = sum(total_population_20)) %>%
+  mutate(total_incarcerated_20 = sum(incarcerated_20)) %>%
+  mutate(state_incarceration_rate_20 = total_incarcerated_20/total_state_pop_20*100000) %>%
+  mutate(total_percent_incarcerated_20 = sum(percent_incarcerated_20)) %>%
+  mutate(total_percent_incarcerated_10 = sum(percent_incarcerated_10)) %>%
+  mutate(total_percent_incarcerated_00 = sum(percent_incarcerated_00))
+
+new_jersey <- subset(incarcerated_pop, state == "NJ") %>%
+  mutate(total_state_pop_20 = sum(total_population_20)) %>%
+  mutate(total_incarcerated_20 = sum(incarcerated_20)) %>%
+  mutate(state_incarceration_rate_20 = total_incarcerated_20/total_state_pop_20*100000) %>%
+  mutate(total_percent_incarcerated_20 = sum(percent_incarcerated_20)) %>%
+  mutate(total_percent_incarcerated_10 = sum(percent_incarcerated_10)) %>%
+  mutate(total_percent_incarcerated_00 = sum(percent_incarcerated_00))
+
+hawaii <- subset(incarcerated_pop, state == "HI") %>%
+  mutate(total_state_pop_20 = sum(total_population_20)) %>%
+  mutate(total_incarcerated_20 = sum(incarcerated_20)) %>%
+  mutate(state_incarceration_rate_20 = total_incarcerated_20/total_state_pop_20*100000) %>%
+  mutate(total_percent_incarcerated_20 = sum(percent_incarcerated_20)) %>%
+  mutate(total_percent_incarcerated_10 = sum(percent_incarcerated_10)) %>%
+  mutate(total_percent_incarcerated_00 = sum(percent_incarcerated_00))
+
+ohio <- subset(incarcerated_pop, state == "OH") %>%
+  mutate(total_state_pop_20 = sum(total_population_20)) %>%
+  mutate(total_incarcerated_20 = sum(incarcerated_20)) %>%
+  mutate(state_incarceration_rate_20 = total_incarcerated_20/total_state_pop_20*100000) %>%
+  mutate(total_percent_incarcerated_20 = sum(percent_incarcerated_20)) %>%
+  mutate(total_percent_incarcerated_10 = sum(percent_incarcerated_10)) %>%
+  mutate(total_percent_incarcerated_00 = sum(percent_incarcerated_00))
+
+minnesota <- subset(incarcerated_pop, state == "MN") %>%
+  mutate(total_state_pop_20 = sum(total_population_20)) %>%
+  mutate(total_incarcerated_20 = sum(incarcerated_20)) %>%
+  mutate(state_incarceration_rate_20 = total_incarcerated_20/total_state_pop_20*100000) %>%
+  mutate(total_percent_incarcerated_20 = sum(percent_incarcerated_20)) %>%
+  mutate(total_percent_incarcerated_10 = sum(percent_incarcerated_10)) %>%
+  mutate(total_percent_incarcerated_00 = sum(percent_incarcerated_00))
+
+oregon <- subset(incarcerated_pop, state == "OR") %>%
+  mutate(total_state_pop_20 = sum(total_population_20)) %>%
+  mutate(total_incarcerated_20 = sum(incarcerated_20)) %>%
+  mutate(state_incarceration_rate_20 = total_incarcerated_20/total_state_pop_20*100000) %>%
+  mutate(total_percent_incarcerated_20 = sum(percent_incarcerated_20)) %>%
+  mutate(total_percent_incarcerated_10 = sum(percent_incarcerated_10)) %>%
+  mutate(total_percent_incarcerated_00 = sum(percent_incarcerated_00))
+
+north_dakota <- subset(incarcerated_pop, state == "ND") %>%
+  mutate(total_state_pop_20 = sum(total_population_20)) %>%
+  mutate(total_incarcerated_20 = sum(incarcerated_20)) %>%
+  mutate(state_incarceration_rate_20 = total_incarcerated_20/total_state_pop_20*100000) %>%
+  mutate(total_percent_incarcerated_20 = sum(percent_incarcerated_20)) %>%
+  mutate(total_percent_incarcerated_10 = sum(percent_incarcerated_10)) %>%
+  mutate(total_percent_incarcerated_00 = sum(percent_incarcerated_00))
+
+kentucky <- subset(incarcerated_pop, state == "KY") %>%
+  mutate(total_state_pop_20 = sum(total_population_20)) %>%
+  mutate(total_incarcerated_20 = sum(incarcerated_20)) %>%
+  mutate(state_incarceration_rate_20 = total_incarcerated_20/total_state_pop_20*100000) %>%
+  mutate(total_percent_incarcerated_20 = sum(percent_incarcerated_20)) %>%
+  mutate(total_percent_incarcerated_10 = sum(percent_incarcerated_10)) %>%
+  mutate(total_percent_incarcerated_00 = sum(percent_incarcerated_00))
+
+new_hampshire <- subset(incarcerated_pop, state == "NH") %>%
+  mutate(total_state_pop_20 = sum(total_population_20)) %>%
+  mutate(total_incarcerated_20 = sum(incarcerated_20)) %>%
+  mutate(state_incarceration_rate_20 = total_incarcerated_20/total_state_pop_20*100000) %>%
+  mutate(total_percent_incarcerated_20 = sum(percent_incarcerated_20)) %>%
+  mutate(total_percent_incarcerated_10 = sum(percent_incarcerated_10)) %>%
+  mutate(total_percent_incarcerated_00 = sum(percent_incarcerated_00))
+
+colorado <- subset(incarcerated_pop, state == "CO") %>%
+  mutate(total_state_pop_20 = sum(total_population_20)) %>%
+  mutate(total_incarcerated_20 = sum(incarcerated_20)) %>%
+  mutate(state_incarceration_rate_20 = total_incarcerated_20/total_state_pop_20*100000) %>%
+  mutate(total_percent_incarcerated_20 = sum(percent_incarcerated_20)) %>%
+  mutate(total_percent_incarcerated_10 = sum(percent_incarcerated_10)) %>%
+  mutate(total_percent_incarcerated_00 = sum(percent_incarcerated_00))
+
+washington <- subset(incarcerated_pop, state == "WA") %>%
+  mutate(total_state_pop_20 = sum(total_population_20)) %>%
+  mutate(total_incarcerated_20 = sum(incarcerated_20)) %>%
+  mutate(state_incarceration_rate_20 = total_incarcerated_20/total_state_pop_20*100000) %>%
+  mutate(total_percent_incarcerated_20 = sum(percent_incarcerated_20)) %>%
+  mutate(total_percent_incarcerated_10 = sum(percent_incarcerated_10)) %>%
+  mutate(total_percent_incarcerated_00 = sum(percent_incarcerated_00))
+
+alaska <- subset(incarcerated_pop, state == "AK") %>%
+  mutate(total_state_pop_20 = sum(total_population_20)) %>%
+  mutate(total_incarcerated_20 = sum(incarcerated_20)) %>%
+  mutate(state_incarceration_rate_20 = total_incarcerated_20/total_state_pop_20*100000) %>%
+  mutate(total_percent_incarcerated_20 = sum(percent_incarcerated_20)) %>%
+  mutate(total_percent_incarcerated_10 = sum(percent_incarcerated_10)) %>%
+  mutate(total_percent_incarcerated_00 = sum(percent_incarcerated_00))
+
+wyoming <- subset(incarcerated_pop, state == "WY") %>%
+  mutate(total_state_pop_20 = sum(total_population_20)) %>%
+  mutate(total_incarcerated_20 = sum(incarcerated_20)) %>%
+  mutate(state_incarceration_rate_20 = total_incarcerated_20/total_state_pop_20*100000) %>%
+  mutate(total_percent_incarcerated_20 = sum(percent_incarcerated_20)) %>%
+  mutate(total_percent_incarcerated_10 = sum(percent_incarcerated_10)) %>%
+  mutate(total_percent_incarcerated_00 = sum(percent_incarcerated_00))
+
+iowa <- subset(incarcerated_pop, state == "IA") %>%
+  mutate(total_state_pop_20 = sum(total_population_20)) %>%
+  mutate(total_incarcerated_20 = sum(incarcerated_20)) %>%
+  mutate(state_incarceration_rate_20 = total_incarcerated_20/total_state_pop_20*100000) %>%
+  mutate(total_percent_incarcerated_20 = sum(percent_incarcerated_20)) %>%
+  mutate(total_percent_incarcerated_10 = sum(percent_incarcerated_10)) %>%
+  mutate(total_percent_incarcerated_00 = sum(percent_incarcerated_00))
+
+wisconsin <- subset(incarcerated_pop, state == "WI") %>%
+  mutate(total_state_pop_20 = sum(total_population_20)) %>%
+  mutate(total_incarcerated_20 = sum(incarcerated_20)) %>%
+  mutate(state_incarceration_rate_20 = total_incarcerated_20/total_state_pop_20*100000) %>%
+  mutate(total_percent_incarcerated_20 = sum(percent_incarcerated_20)) %>%
+  mutate(total_percent_incarcerated_10 = sum(percent_incarcerated_10)) %>%
+  mutate(total_percent_incarcerated_00 = sum(percent_incarcerated_00))
+
+florida <- subset(incarcerated_pop, state == "FL") %>%
+  mutate(total_state_pop_20 = sum(total_population_20)) %>%
+  mutate(total_incarcerated_20 = sum(incarcerated_20)) %>%
+  mutate(state_incarceration_rate_20 = total_incarcerated_20/total_state_pop_20*100000) %>%
+  mutate(total_percent_incarcerated_20 = sum(percent_incarcerated_20)) %>%
+  mutate(total_percent_incarcerated_10 = sum(percent_incarcerated_10)) %>%
+  mutate(total_percent_incarcerated_00 = sum(percent_incarcerated_00))
+
+kansas <- subset(incarcerated_pop, state == "KS") %>%
+  mutate(total_state_pop_20 = sum(total_population_20)) %>%
+  mutate(total_incarcerated_20 = sum(incarcerated_20)) %>%
+  mutate(state_incarceration_rate_20 = total_incarcerated_20/total_state_pop_20*100000) %>%
+  mutate(total_percent_incarcerated_20 = sum(percent_incarcerated_20)) %>%
+  mutate(total_percent_incarcerated_10 = sum(percent_incarcerated_10)) %>%
+  mutate(total_percent_incarcerated_00 = sum(percent_incarcerated_00))
+
+nevada <- subset(incarcerated_pop, state == "NV") %>%
+  mutate(total_state_pop_20 = sum(total_population_20)) %>%
+  mutate(total_incarcerated_20 = sum(incarcerated_20)) %>%
+  mutate(state_incarceration_rate_20 = total_incarcerated_20/total_state_pop_20*100000) %>%
+  mutate(total_percent_incarcerated_20 = sum(percent_incarcerated_20)) %>%
+  mutate(total_percent_incarcerated_10 = sum(percent_incarcerated_10)) %>%
+  mutate(total_percent_incarcerated_00 = sum(percent_incarcerated_00))
+
+maryland <- subset(incarcerated_pop, state == "MD") %>%
+  mutate(total_state_pop_20 = sum(total_population_20)) %>%
+  mutate(total_incarcerated_20 = sum(incarcerated_20)) %>%
+  mutate(state_incarceration_rate_20 = total_incarcerated_20/total_state_pop_20*100000) %>%
+  mutate(total_percent_incarcerated_20 = sum(percent_incarcerated_20)) %>%
+  mutate(total_percent_incarcerated_10 = sum(percent_incarcerated_10)) %>%
+  mutate(total_percent_incarcerated_00 = sum(percent_incarcerated_00))
 
 ```
 
-## Calculating State Incarceration Rates
+### 1. Which states have the highest incarceration rate per 100,000 people?
+
+```{r}
+
+install.packages("usmap")
+library(usmap)
+
+# Example - Western States
+plot_usmap(include = c("CA", "ID", "NV", "OR", "WA")) +
+  labs(title = "Western U.S. States", 
+    subtitle = "Subtitle")
+
+incarceration_rates <- read_csv("data/2020-incarceration-rates.csv")
+
+# top 10 highest
+incarceration_rates %>%
+  arrange(desc(incarceration_rate)) %>%
+  head(10)
+
+# Louisiana	-	1100.1220	
+# West Virginia	- 1096.5500	
+# Mississippi	- 1038.2340	
+# Oklahoma - 971.2445	
+# Arkansas - 	899.1793	
+# Arizona	- 897.0703	
+# Georgia	- 858.2225	
+# Texas	- 853.5244	
+# Kentucky - 851.0296	
+# Alabama - 791.1384	
+
+# top 10 lowest
+incarceration_rates %>%
+  arrange(incarceration_rate) %>%
+  head(10)
+
+# Vermont	- 189.5574	
+# Maine	- 246.6310	
+# Massachusetts	- 255.6076	
+# Hawaii - 257.8214	
+# Rhode Island - 280.8510	
+# Minnesota	- 292.1584	
+# New York - 310.4115	
+# New Hampshire	-	319.0495	
+# Utah - 326.4442	
+# North Dakota	- 329.9987	
+
+# Map
+plot_usmap(data = incarceration_rates, values = "incarceration_rate", color = "black") + 
+  labs(title = "Incarcerations Rates Across the United States in 2020",
+       subtitle = "Louisiana has the highest incarceration rate at 1100 per 100,000 people.") +
+  scale_fill_continuous(
+    low = "white", high = "dark green", name = "Incarceration Rate", label = scales::comma) + theme(legend.position = "right")
+
+```
+
+### 2. Which were the top 10 U.S. counties that saw the largest percent increase in prison population since 2010? Alternatively, which were the top 10 U.S. counties that saw either a decrease or no change in prison population since 2010? 
+
+```{r}
+
+# not finished
+
+percent_counties_00 <- incarcerated_pop %>%
+  select(fips, percent_incarcerated_00)
+
+percent_counties_10 <- incarcerated_pop %>%
+  select(fips, percent_incarcerated_10)
+
+percent_counties_20 <- incarcerated_pop %>%
+  select(fips, percent_incarcerated_20)
+  
+# 2000
+
+incarcerated_pop %>%
+  arrange(desc(percent_incarcerated_00)) %>%
+  select(state, county, percent_incarcerated_00) %>%
+  head(10)
+
+# county level map
+plot_usmap(regions = "counties", data = percent_counties_00, values = "percent_incarcerated_00", color = "black") +
+  labs(title = "Title",
+       subtitle = "Subtitle") +
+  scale_fill_continuous(low = "#c9d9c9", high = "#236d32", name = "Legend", label = scales::comma) + 
+  theme(legend.position = "right")
+
+# 2010
+
+incarcerated_pop %>%
+  arrange(desc(percent_incarcerated_10)) %>%
+  select(state, county, percent_incarcerated_10) %>%
+  head(10)
+
+# county level map
+plot_usmap(regions = "counties", data = percent_counties_10, values = "percent_incarcerated_10", color = "black") +
+  labs(title = "Title",
+       subtitle = "Subtitle") +
+  scale_fill_continuous(low = "#c9d9c9", high = "#236d32", name = "Legend", label = scales::comma) + 
+  theme(legend.position = "right")
+
+
+# 2020
+
+incarcerated_pop %>%
+  arrange(desc(percent_incarcerated_20)) %>%
+  select(state, county, percent_incarcerated_20) %>%
+  head(10)
+
+# county level map
+plot_usmap(regions = "counties", data = percent_counties_20, values = "percent_incarcerated_20", color = "black") +
+  labs(title = "Title",
+       subtitle = "Subtitle") +
+  scale_fill_continuous(low = "#c9d9c9", high = "#236d32", name = "Legend", label = scales::comma) + 
+  theme(legend.position = "right")
+
+```
+
+### 3. For each U.S. state, roughly how much (%) of the state’s adult population was incarcerated/being held in a correctional facility in 2020? Compare it to figures from 2010 and 2000.
+
+```{r}
+
+```
+
+### 4. Using ACS data, find out how much of the population is foreign born in the top 10 U.S. counties that saw the largest increase in prison population since 2010?
+
+```{r}
+
+```
+
+
+### 5. Using ACS data, find out which racial or ethnic groups make up the majority in the top 10 U.S. counties that saw the largest increase in prison population since 2010?
+
+```{r}
+
+```
+
+
+### Example County Level Maps (Percent Incarcerated)
 
 ```{r}
 
@@ -156,21 +650,19 @@ md_geo <- md_geo %>%
   rename(county = NAME) %>%
   mutate(county = str_remove_all(county,", Maryland"))
 
-# total state pop + incarceration rate 2020
+# total state pop + state incarceration rate 2020
 
 maryland <- maryland %>%
   mutate(total_state_pop_20 = sum(total_population_20)) %>%
   mutate(total_incarcerated_20 = sum(incarcerated_20)) %>%
-  mutate(incarceration_rate_20 = total_incarcerated_20/total_state_pop_20*100000)
+  mutate(state_incarceration_rate_20 = total_incarcerated_20/total_state_pop_20*100000)
 
 # join dataframes
 
-maryland <- maryland %>%
-  left_join(md_geo, by="county")
+maryland <- md_geo %>%
+  left_join(maryland, by="county")
 
 # map prep
-
-options(tigris_use_cache = TRUE)
 
 counties <- counties()
 
@@ -180,8 +672,43 @@ md_counties <- counties %>%
 # map
 
 ggplot() + 
-  geom_sf(data=maryland, aes(geometry = geometry, fill=incarceration_rate_20)) +
+  geom_sf(data=maryland, aes(fill=percent_incarcerated_20)) +
   theme_minimal() +
-  scale_fill_viridis_b(option="magma",trans = "log") 
+  scale_fill_viridis_b(option="magma")
+
+
+# Virginia
+
+va_geo <- get_acs(geography = "county",
+      variables = c(population = "B01001_001"),
+      state = "VA",
+      geometry = TRUE)
+
+va_geo <- va_geo %>% 
+  select(-variable, -estimate, -moe) %>%
+  rename(geoid = GEOID) %>%
+  rename(county = NAME) %>%
+  mutate(county = str_remove_all(county,", Virginia"))
+
+virginia <- virginia %>%
+  mutate(total_state_pop_20 = sum(total_population_20)) %>%
+  mutate(total_incarcerated_20 = sum(incarcerated_20)) %>%
+  mutate(state_incarceration_rate_20 = total_incarcerated_20/total_state_pop_20*100000)
+
+# join dataframes
+
+virginia <- va_geo %>%
+  left_join(virginia, by="county")
+
+counties <- counties()
+
+va_counties <- counties %>%
+  filter(STATEFP == "51")
+
+
+ggplot() + 
+  geom_sf(data=virginia, aes(fill=percent_incarcerated_20)) +
+  theme_minimal() +
+  scale_fill_viridis_b(option="magma")
 
 ```

@@ -553,11 +553,35 @@ plot_usmap(data = incarceration_rates, values = "incarceration_rate", color = "b
 
 ```
 
-### 2. Which were the top 10 U.S. counties that saw the largest percent increase in prison population since 2010? Alternatively, which were the top 10 U.S. counties that saw either a decrease or no change in prison population since 2010? 
+### 2. Which U.S. region has the highest incarceration rates?
 
 ```{r}
 
-# not finished
+# Northeast
+
+plot_usmap(include = .northeast_region, data = incarceration_rates, values = "incarceration_rate", color = "black") + theme(legend.position = "right")
+
+# Midwest
+
+plot_usmap(include = .midwest_region, data = incarceration_rates, values = "incarceration_rate", color = "black") + theme(legend.position = "right")
+
+# West
+
+plot_usmap(include = .west_region, data = incarceration_rates, values = "incarceration_rate", color = "black") + theme(legend.position = "right")
+
+# South 
+
+plot_usmap(include = .south_region, data = incarceration_rates, values = "incarceration_rate", color = "black") + theme(legend.position = "right")
+
+```
+
+
+
+
+
+### 3. Which were the top 10 U.S. counties that saw the largest percent increase in prison population since 2010? Alternatively, which were the top 10 U.S. counties that saw either a decrease or no change in prison population since 2010? 
+
+```{r}
 
 percent_counties_00 <- incarcerated_pop %>%
   select(fips, percent_incarcerated_00)
@@ -613,18 +637,11 @@ plot_usmap(regions = "counties", data = percent_counties_20, values = "percent_i
 
 ```
 
-### 3. For each U.S. state, roughly how much (%) of the state’s adult population was incarcerated/being held in a correctional facility in 2020? Compare it to figures from 2010 and 2000.
+### 4. For each U.S. state, roughly how much (%) of the state’s adult population was incarcerated/being held in a correctional facility in 2020? Compare it to figures from 2010 and 2000.
 
 ```{r}
 
 ```
-
-### 4. Using ACS data, find out how much of the population is foreign born in the top 10 U.S. counties that saw the largest increase in prison population since 2010?
-
-```{r}
-
-```
-
 
 ### 5. Using ACS data, find out which racial or ethnic groups make up the majority in the top 10 U.S. counties that saw the largest increase in prison population since 2010?
 

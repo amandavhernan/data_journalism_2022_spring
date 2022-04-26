@@ -22,11 +22,13 @@ knitr::opts_chunk$set(echo = TRUE)
 # Turn off scientific notation
 options(scipen=999)
 
+library(tidycensus)
 library(tidyverse)
 library(janitor)
 library(lubridate)
 library(ggrepel)
 library(sf)
+library(tigris)
 
 ```
 
@@ -45,30 +47,29 @@ Then write code that will construct a paragraph about the data described above c
 
 Put your sentence in the answer below, along with one other question you could ask of this data.
 
-**A1.**
+**A1.** Sentence -> "The most recent police incident at West Virginia University was a ASSIST POLICE POLICE on 2022-04-21 and there were 3 of these incidents in the last 30 days." This crime log could also be used to find how often incidents occur at certain buildings such as lecture halls or dorms. It could also be used to analyze the outcomes and determine how often cases are resolved, under investigation, closed, etc.
 
 ```{r}
 
-wvu_crime_log <- read_csv("https://raw.githubusercontent.com/dwillis/wvu-projects/master/crime-log/crime_log.csv") %>%
-  as_date( )
+wvu_crime_logs <- read_csv("https://raw.githubusercontent.com/dwillis/wvu-projects/master/crime-log/crime_log.csv") %>%
+  clean_names() %>%
+  mutate(new_date = mdy_hm(datetime)) %>%
+  mutate(date = date(new_date)) %>%
+  mutate(hour = hour(new_date)) %>%
+  mutate(weekday = wday(new_date)) %>%
+  arrange(desc(new_date))
 
-
-
-
-  mutate(date = date(datetime))
+most_recent_date <- wvu_crime_logs %>%
+  slice(1)
   
+last_30_days <- wvu_crime_logs %>%
+  filter(title == most_recent_date$title) %>% 
+  filter(date > most_recent_date$date - 30) %>% 
+  summarise(count=n())
+  
+q1 <- paste("The most recent police incident at West Virginia University was a", format(most_recent_date$title), "on", format(most_recent_date$date), "and there were", format(last_30_days$count), "of these incidents in the last 30 days.")
 
-         
-
-
-
-
-#most_recent_incidents
-
-#date time day of the week
-
-
-
+q1
 
 ```
 
@@ -87,13 +88,44 @@ To do that, you will need to:
 
 Google the top 2-3 zip codes from both Maryland and non-Maryland results and describe them in your answer.
 
-**A2.**
+**A2.** The top three Maryland zip codes were 20906, 20878, and 20874. These zip codes are all located in Montgomery County, which is adjacent to Prince George's County and Washington, D.C. More specifically, the zip codes are located in Silver Spring, Gaithersburg, and Germantown, respectively. The top three zip codes outside of Maryland were 20011, 20002, and 20009, which are all located in Washington, D.C. 20011 and 20009 are in the Northwestern part of the city whereas 20002 is in Northeast.
 
 ```{r}
 
+vaccinations_by_zip <- read_csv("https://raw.githubusercontent.com/state-of-maryland/VaccineCSVs/master/Vax_ZIP_CODE_FirstSecondSingle_Totals_Raw.csv")
 
+clean_vaccinations_by_zip <- vaccinations_by_zip %>%
+  filter(!is.na(FullyVaccinated)) %>%
+  clean_names() %>%
+  mutate(date = today())
+  
+clean_vaccinations_by_zip <- clean_vaccinations_by_zip %>%
+  mutate(zip = str_sub(zip_code, start=1L, end=5L)) %>%
+  filter(nchar(zip) == 5)
 
+clean_vaccinations_by_zip <- select(clean_vaccinations_by_zip, -zip_code)
 
+# maryland zip codes -> https://worldpopulationreview.com/zips/maryland
+# lowest -> 20601, highest -> 21930
+
+md_vaccinations_by_zip <- clean_vaccinations_by_zip %>%
+  filter(zip >= 20601, zip <= 21930) %>%
+  arrange(desc(fully_vaccinated)) %>%
+  head(25)
+
+non_md_vaccinations_by_zip <- clean_vaccinations_by_zip %>%
+  filter(!zip >= 20601 | !zip <= 21930)%>% 
+  arrange(desc(fully_vaccinated)) %>%
+  head(25)
+
+date <- format(today())
+date = str_replace_all(date, "-", "")
+
+md_csv <- paste0("maryland_zips_", date, ".csv")
+non_md_csv <-paste0("non_maryland_zips_", date, ".csv")
+
+write_csv(md_vaccinations_by_zip, md_csv)
+write_csv(non_md_vaccinations_by_zip, non_md_csv)
 
 ```
 
@@ -103,7 +135,44 @@ You WILL need to ensure that the columns you use to join the two dataframes are 
 
 Describe the output of the map below, and say what you think the most interesting areas are.
 
-**A3.**
+**A3.** Most the zip codes with full vaccination rates less than 50% are located around the edge of the state. I thought it was interesting how most of the zip codes were in the 20-40% range, and it appears only two zip codes have vaccination rates less than 14%.
 
 ```{r}
+
+md_vaccinations <- clean_vaccinations_by_zip %>%
+  filter(zip >= 20601, zip <= 21930)
+
+md_pop <- get_acs(geography = "zcta", 
+              variables = c(population = "B01001_001"), 
+              state = "MD",
+              geometry = TRUE) 
+
+joined_md_pop_vax <- md_pop %>%
+  left_join(md_vaccinations, by=c('GEOID' = 'zip')) %>%
+  select(-NAME, -variable, -moe, -first_dose, -second_dose, -single_dose, -atleast_one_dose) %>%
+  rename('population' = 'estimate') %>%
+  mutate(percent_vaccinated = (fully_vaccinated/population)*100)
+
+less_than_50 <- joined_md_pop_vax %>%
+  filter(percent_vaccinated < 50) %>%
+  arrange(desc(percent_vaccinated))
+
+md_zips = md_vaccinations$zip
+
+zctas <- zctas()
+
+md_zctas <- zctas %>%
+  filter(GEOID20 %in% md_zips)
+
+md_zctas %>% 
+ggplot() + 
+  geom_sf() + 
+  geom_sf(data=less_than_50, aes(fill=percent_vaccinated)) + 
+  theme_minimal() +
+  labs(
+    title = paste("Maryland zip codes with vaccination rates less than 50% as of", today()),
+    caption = "Source: State of Maryland", 
+    fill = "Percent fully vaccinated") +
+  scale_fill_viridis_b(option="plasma",trans = "log") 
+
 ```

@@ -1,15 +1,11 @@
 ---
-title: "Data Analysis Project"
+title: "Analyzing the United States' Incarcerated Adult Population"
 author: "Amanda Hernandez"
-date: "4/16/2022"
+date: "5/3/2022"
 output: html_notebook
 ---
 
-### Loading Packages
-
 ```{r}
-
-# look into pop growth in comparison to incarceration rates over time
 
 library(tidyverse)
 library(tidycensus)
@@ -17,6 +13,9 @@ library(dplyr)
 library(sf)
 library(tigris)
 library(ggplot2)
+library(usmap)
+library(gganimate)
+library(gifski)
 
 census_api_key("8b69f2765f65670c2183febdffce6afc73c72101", install=TRUE, overwrite=TRUE)
 readRenviron("~/.Renviron")
@@ -25,20 +24,42 @@ readRenviron("~/.Renviron")
 
 ### Data Prep & Exploration
 
+Before diving head first into this dataset, it's important to understand what this data means and what it represents. The dataset, which was downloaded from The Marshall Project's page on Observable (https://observablehq.com/@themarshallproject/adults-in-correctional-facilities-from-decennial-census), is composed of the number of adults in correctional facilities by county. This population data was collected by the U.S. Census Bureau in 2000, 2010, and 2020.
+
+It's also important to note that the Census Bureau uses the term "correctional facility" to refer to federal detention centers, federal and state prisons, local jails, correctional residential facilities, and military jails.
+
+When first downloaded and read into RStudio, the dataset will include the following variables or columns: 
+
+* state -> State postal codes
+* county -> County name
+* FIPS -> 6-digit FIPS code for the county
+* total_population_20 -> Total population of the county in the 2020 Census
+* incarcerated_20 -> Number of incarcerated people in correctional facilities as of the 2020 Census
+* total_population_10 -> Total population of the county in the 2010 Census
+* incarcerated_10 -> Number of incarcerated people in correctional facilities as of the 2010 Census
+* total_population_00 -> Total population of the county in the 2000 Census
+* incarcerated_00 -> Number of incarcerated people in correctional facilities as of the 2000 Census
+
+Although these variables are useful on their own, we'll also add some new ones below. This will help us better understand what potential patterns this data is showing us and how the data as a whole fits together. 
+
 ```{r}
 
 incarcerated_pop <- read_csv("data/census_incarceration.csv") %>%
-  rename(fips = FIPS)
+  rename(fips = FIPS) # this standardizes the column names
 
 nrow(incarcerated_pop) # 3211 records
 ncol(incarcerated_pop) # 9 columns/variables
 
-# add percent of pop incarcerated (2000, 2010, 2020)
+View(incarcerated_pop)
+
+# the following code adds columns that display the percent of a county's adult population that's incarcerated for 2000, 2010, and 2020
 
 incarcerated_pop <- incarcerated_pop %>%
   mutate(percent_incarcerated_20 = (incarcerated_20/total_population_20)*100) %>%
   mutate(percent_incarcerated_10 = (incarcerated_10/total_population_10)*100) %>%
   mutate(percent_incarcerated_00 = (incarcerated_00/total_population_00)*100)
+
+# the next few lines of code returns a tibble displaying the counties with the highest percentages of incarcerated adult populations in 2020
 
 incarcerated_pop %>%
   arrange(desc(percent_incarcerated_20)) %>%
@@ -51,8 +72,6 @@ incarcerated_pop %>%
 # LA	West Feliciana Parish	34.5133899		
 # GA	Wheeler County 31.6155802
 
-mean(incarcerated_pop$percent_incarcerated_20) # = 1.404581
-
 incarcerated_pop %>%
   arrange(desc(percent_incarcerated_10)) %>%
   select(state, county, percent_incarcerated_10)
@@ -63,8 +82,6 @@ incarcerated_pop %>%
 # LA	West Feliciana Parish	33.0944000		
 # CO	Bent County	32.2818895		
 # TX	Garza County	30.8775731	
-
-mean(incarcerated_pop$percent_incarcerated_10) # = 1.458736
 
 incarcerated_pop %>%
   arrange(desc(percent_incarcerated_00)) %>%
@@ -77,14 +94,22 @@ incarcerated_pop %>%
 # FL	Union County	30.2112781		
 # IL	Brown County	27.5107914
 
-mean(incarcerated_pop$percent_incarcerated_00) # = 1.19643
-
-# Findings:
-# Average percent of incarcerated adult population has gone down nationwide since 2000. Crowley County and West Feliciana Parish are on every top five list.
-
 ```
 
-### Create State Dataframes & Calculate Incarceration Rates
+After exploring the data a bit closer in the codeblock above, some interesting patterns appear. Crowley County and West Feliciana Parish, for example, are on every top five list for each year. Also, at least three of the counties in each list are located in Southern states. 
+
+Now that we have a better understanding of this data, the next codeblock creates dataframes for each state. Each state dataframe also have new columns that represent statewide data for 2000, 2010, and 2020. Here's a breakdown of those new columns and what they mean: 
+
+> Important Note: The key below does not include numbers at the end as seen in the codeblock. The full column name would look like this -> total_state_pop_20. The numbers at the end represent either 2000 (00), 2010 (10), or 2020 (20).
+
+* total_state_pop -> Total population for the state
+* total_incarcerated -> Number of incarcerated people in correctional facilities statewide
+* state_incarceration_rate -> Number of incarcerated people in correctional facilities statewide per 100,000 people (per capita)
+* total_pct_incarcerated -> Total percent of state population incarcerated
+
+As you load each dataframe, it might look like there are some strange duplicates under the columns listed above. These duplicates are actually OK to keep. I used these figures to build another dataset we will use later.
+
+### Creating State Dataframes
 
 ```{r}
 
@@ -807,83 +832,109 @@ maryland <- subset(incarcerated_pop, state == "MD") %>%
 
 ```
 
-### 1. Which states had the highest incarceration rate per 100,000 people over time (2000-2020)? How does it compare to population growth?
+Now that all of the state dataframes have loaded successfully, let's start taking an even closer look. Using the guiding questions below, you will start to see interesting patterns emerge.
+
+First, let's look at incarcerations rates and how they compare to population over time.
+
+#### 1. Which states had the highest incarceration rate per 100,000 people over time (2000-2020)? How does it compare to changes in population?
 
 ```{r}
 
-install.packages("usmap")
-library(usmap)
+incarceration_rates_pct <- read_csv("data/state_incarceration_rates_pct.csv")
 
-incarceration_rates <- read_csv("data/2020-incarceration-rates.csv")
+# 2020 - incarceration rates
 
-# top 10 highest incarceration rates in 2020
-incarceration_rates %>%
-  arrange(desc(incarceration_rate)) %>%
+incarceration_rates_pct %>%
+  arrange(desc(incarceration_rate_20)) %>%
+  select(state, incarceration_rate_20) %>%
   head(10)
 
-# Louisiana	-	1100.1220	
-# West Virginia	- 1096.5500	
-# Mississippi	- 1038.2340	
-# Oklahoma - 971.2445	
-# Arkansas - 	899.1793	
-# Arizona	- 897.0703	
-# Georgia	- 858.2225	
-# Texas	- 853.5244	
-# Kentucky - 851.0296	
-# Alabama - 791.1384	
-
-# top 10 lowest incarceration rates in 2020
-incarceration_rates %>%
-  arrange(incarceration_rate) %>%
-  head(10)
-
-# Vermont	- 189.5574	
-# Maine	- 246.6310	
-# Massachusetts	- 255.6076	
-# Hawaii - 257.8214	
-# Rhode Island - 280.8510	
-# Minnesota	- 292.1584	
-# New York - 310.4115	
-# New Hampshire	-	319.0495	
-# Utah - 326.4442	
-# North Dakota	- 329.9987	
-
-# Map
-plot_usmap(data = incarceration_rates, values = "incarceration_rate", color = "black") + 
+plot_usmap(data = incarceration_rates_pct, values = "incarceration_rate_20", color = "black") + 
   labs(title = "Incarcerations Rates Across the United States in 2020",
        subtitle = "Louisiana has the highest incarceration rate at 1100 per 100,000 people.") +
   scale_fill_continuous(
-    low = "white", high = "dark green", name = "Incarceration Rate", label = scales::comma) + theme(legend.position = "right")
+    low = "white", high = "deep sky blue 4", name = "Incarceration Rate", label = scales::comma) + theme(legend.position = "right")
+
+# 2020 - population
+
+plot_usmap(data = incarceration_rates_pct, values = "total_state_pop_20", color = "black") +
+  scale_fill_continuous(low = "white", high = "deep sky blue 4", name = "Population", label = scales::comma) + theme(legend.position = "right") +
+  scale_x_continuous(expand = c(0, 0)) + scale_y_continuous(expand = c(0, 0))
+
+# 2010 - incarceration rates
+
+incarceration_rates_pct %>%
+  arrange(desc(incarceration_rate_10)) %>%
+  select(state, incarceration_rate_10) %>%
+  head(10)
+
+plot_usmap(data = incarceration_rates_pct, values = "incarceration_rate_10", color = "black") + 
+  labs(title = "Incarcerations Rates Across the United States in 2010",
+       subtitle = "Louisiana has the highest incarceration rate at 1341 per 100,000 people.") +
+  scale_fill_continuous(
+    low = "white", high = "deep sky blue 4", name = "Incarceration Rate", label = scales::comma) + theme(legend.position = "right")
+
+# 2010 - population
+
+plot_usmap(data = incarceration_rates_pct, values = "total_state_pop_10", color = "black") +
+  scale_fill_continuous(low = "white", high = "deep sky blue 4", name = "Population", label = scales::comma) + theme(legend.position = "right") +
+  scale_x_continuous(expand = c(0, 0)) + scale_y_continuous(expand = c(0, 0))
+
+# 2000 - incarceration rates
+
+incarceration_rates_pct %>%
+  arrange(desc(incarceration_rate_00)) %>%
+  select(state, incarceration_rate_00) %>%
+  head(10)
+
+plot_usmap(data = incarceration_rates_pct, values = "incarceration_rate_10", color = "black") + 
+  labs(title = "Incarcerations Rates Across the United States in 2000",
+       subtitle = "Louisiana has the highest incarceration rate at 1360 per 100,000 people.") +
+  scale_fill_continuous(
+    low = "white", high = "deep sky blue 4", name = "Incarceration Rate", label = scales::comma) + theme(legend.position = "right")
+
+# 2000 - population
+
+plot_usmap(data = incarceration_rates_pct, values = "total_state_pop_00", color = "black") +
+  scale_fill_continuous(low = "white", high = "deep sky blue 4", name = "Population", label = scales::comma) + theme(legend.position = "right") +
+  scale_x_continuous(expand = c(0, 0)) + scale_y_continuous(expand = c(0, 0))
 
 ```
 
-### 2. Which U.S. region has the highest incarceration rates?
+```{r}
+
+# practicing map animation
+
+
+
+
+```
+
+
+#### 2. Which U.S. region has the highest incarceration rates?
+
+Based on the graphics generated by the code below, it looks like Southern region of the United States generally has the highest incarceration rates.
 
 ```{r}
 
-# Northeast
+# northeast
 
 plot_usmap(include = .northeast_region, data = incarceration_rates, values = "incarceration_rate", color = "black") + theme(legend.position = "right")
 
-# Midwest
+# midwest
 
 plot_usmap(include = .midwest_region, data = incarceration_rates, values = "incarceration_rate", color = "black") + theme(legend.position = "right")
 
-# West
+# west
 
 plot_usmap(include = .west_region, data = incarceration_rates, values = "incarceration_rate", color = "black") + theme(legend.position = "right")
 
-# South 
+# south 
 
 plot_usmap(include = .south_region, data = incarceration_rates, values = "incarceration_rate", color = "black") + theme(legend.position = "right")
 
 ```
-
-
-
-
-
-### 3. Which were the top 10 U.S. counties that saw the largest percent increase in prison population since 2010? Alternatively, which were the top 10 U.S. counties that saw either a decrease or no change in prison population since 2010? 
+#### 3. Which were the top 10 U.S. counties that saw the largest percent increase in prison population since 2010? Alternatively, which were the top 10 U.S. counties that saw either a decrease or no change in prison population since 2010? 
 
 ```{r}
 
@@ -943,13 +994,34 @@ plot_usmap(regions = "counties", data = percent_counties_20, values = "percent_i
 
 ```
 
-### 4. For each U.S. state, roughly how much (%) of the state’s adult population was incarcerated/being held in a correctional facility in 2020? Compare it to figures from 2010 and 2000.
+#### 4. For each U.S. state, roughly how much (%) of the state’s adult population was incarcerated/being held in a correctional facility in 2020? Compare it to figures from 2010 and 2000.
 
 ```{r}
 
+# 2020
+
+plot_usmap(data = incarceration_rates_pct, values = "pct_incarcerated_20", color = "black") + 
+  labs(title = "Percent of Total Population Incarcerated by State in 2020") +
+  scale_fill_continuous(
+    low = "white", high = "deep pink 4", name = "Percent Incarcerated", label = scales::comma) + theme(legend.position = "right")
+
+# 2010
+
+plot_usmap(data = incarceration_rates_pct, values = "pct_incarcerated_10", color = "black") + 
+  labs(title = "Percent of Total Population Incarcerated by State in 2010") +
+  scale_fill_continuous(
+    low = "white", high = "deep pink 4", name = "Percent Incarcerated", label = scales::comma) + theme(legend.position = "right")
+
+# 2000
+
+plot_usmap(data = incarceration_rates_pct, values = "pct_incarcerated_00", color = "black") + 
+  labs(title = "Percent of Total Population Incarcerated by State in 2000") +
+  scale_fill_continuous(
+    low = "white", high = "deep pink 4", name = "Percent Incarcerated", label = scales::comma) + theme(legend.position = "right")
+
 ```
 
-### 5. Using ACS data, find out which racial or ethnic groups make up the majority in the top 10 U.S. counties that saw the largest increase in prison population since 2010?
+#### 5. Using ACS data, find out which racial or ethnic groups make up the majority in the top 10 U.S. counties that saw the largest increase in prison population since 2010?
 
 ```{r}
 

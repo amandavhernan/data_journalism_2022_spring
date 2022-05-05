@@ -53,14 +53,16 @@ ncol(incarcerated_pop) # 9 columns/variables
 
 View(incarcerated_pop)
 
-# the following code adds columns that display the percent of a county's adult population that's incarcerated for 2000, 2010, and 2020
+# the following code adds columns that display the percent of a county's adult population that's incarcerated and the incarceration rates for 2000, 2010, and 2020
 
 incarcerated_pop <- incarcerated_pop %>%
   mutate(percent_incarcerated_20 = (incarcerated_20/total_population_20)*100) %>%
   mutate(percent_incarcerated_10 = (incarcerated_10/total_population_10)*100) %>%
   mutate(percent_incarcerated_00 = (incarcerated_00/total_population_00)*100)
 
-# the next few lines of code returns a tibble displaying the counties with the highest percentages of incarcerated adult populations in 2020
+# write.csv(incarcerated_pop, "updated_census_incarceration.csv", row.names = TRUE)
+
+# the next few lines of code returns a tibble displaying the counties with the highest percentages of incarcerated adult populations in 2020, 2010, and 2020
 
 incarcerated_pop %>%
   arrange(desc(percent_incarcerated_20)) %>%
@@ -97,7 +99,7 @@ incarcerated_pop %>%
 
 ```
 
-After exploring the data a bit closer in the codeblock above, some interesting patterns appear. Crowley County and West Feliciana Parish, for example, are on every top five list for each year. Also, at least three of the counties in each list are located in Southern states. 
+After exploring the data a bit closer in the codeblock above, some interesting patterns appear. Crowley County and West Feliciana Parish, for example, are on every top five list for each year. It's also a bit alarming how high the incarceration rates are. In 2020, roughly 48% of Crowley County's population was incarcerated. That accounts for almost half of the population. Also, at least three of the counties in each list are located in the south.
 
 Now that we have a better understanding of this data, the next codeblock creates dataframes for each state. Each state dataframe also have new columns that represent statewide data for 2000, 2010, and 2020. Here's a breakdown of those new columns and what they mean: 
 
@@ -1070,9 +1072,50 @@ plot_usmap(data = incarceration_rates_pct, values = "pct_incarcerated_00", color
 
 ```
 
-#### 5. Using ACS data, find out which racial or ethnic groups make up the majority in the top 10 U.S. counties that saw the largest increase in prison population since 2010?
+#### 5. Using ACS data, determine whether median household incomes and incarceration rate are related variables.
 
 ```{r}
+
+# CO	Crowley County	48.1256332		
+# PA	Forest County	38.0467518		
+# MS	Issaquena County	36.8460389		
+# LA	West Feliciana Parish	34.5133899		
+# GA	Wheeler County 31.6155802
+
+# load acs variables
+
+acs_variables <- load_variables(year = 2020,
+                      dataset = "acs5",
+                      cache = TRUE)
+
+# load median income estimates for Colorado, Pennsylvania, Mississippi, Louisiana, and Georgia
+
+colorado_medincome <- get_acs(geography = "county",
+              variables = c(medincome = "B19013_001"),
+              state = "CO",
+              year = 2020)
+
+pennsylvania_medincom <- get_acs(geography = "county",
+              variables = c(medincome = "B19013_001"),
+              state = "PA",
+              year = 2020)
+
+mississippi_medincom <- get_acs(geography = "county",
+              variables = c(medincome = "B19013_001"),
+              state = "MS",
+              year = 2020)
+
+louisiana_acs(geography = "county",
+              variables = c(medincome = "B19013_001"),
+              state = "LA",
+              year = 2020)
+
+georgia_acs(geography = "county",
+              variables = c(medincome = "B19013_001"),
+              state = "GA",
+              year = 2020)
+
+
 
 ```
 

@@ -1,23 +1,26 @@
 ---
-title: "U.S. Census Bureau Data Reveals History of Prison Gerrymandering"
-author: "Amanda Hernandez"
-date: "5/10/2022"
-output: html_notebook
---
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+|                                                                           |
+|------------------------------------------------------------------------|
+| title: "U.S. Census Bureau Data Reveals History of Prison Gerrymandering" |
+| author: "Amanda Hernandez"                                                |
+| date: "5/10/2022"                                                         |
+| output: html_notebook                                                     |
 
 ```{r}
 
 library(tidyverse)
-# library(tidycensus)
+library(tidycensus)
 library(dplyr)
 library(sf)
-# library(tigris)
+library(tigris)
 library(ggplot2)
 library(usmap)
 library(maps)
-library(mapview)
-library(leaflet)
-library(htmlwidgets)
 
 census_api_key("8b69f2765f65670c2183febdffce6afc73c72101", install=TRUE, overwrite=TRUE)
 readRenviron("~/.Renviron")
@@ -26,23 +29,42 @@ readRenviron("~/.Renviron")
 
 ### Data Prep & Exploration
 
-Before diving head first into this dataset, it's important to understand what this data means and what it represents. The dataset, which was downloaded from The Marshall Project's page on Observable (https://observablehq.com/@themarshallproject/adults-in-correctional-facilities-from-decennial-census), is composed of the number of adults in correctional facilities by county. This population data was collected by the U.S. Census Bureau in 2000, 2010, and 2020.
+Before diving head first into this dataset, it's important to understand
+what this data means and what it represents. The dataset, which was
+downloaded from The Marshall Project's page on Observable
+([https://observablehq.com/\@themarshallproject/adults-in-correctional-facilities-from-decennial-census](https://observablehq.com/@themarshallproject/adults-in-correctional-facilities-from-decennial-census){.uri}),
+is composed of the number of adults in correctional facilities by
+county. This population data was collected by the U.S. Census Bureau in
+2000, 2010, and 2020.
 
-It's also important to note that the Census Bureau uses the term "correctional facility" to refer to federal detention centers, federal and state prisons, local jails, correctional residential facilities, and military jails.
+It's also important to note that the Census Bureau uses the term
+"correctional facility" to refer to federal detention centers, federal
+and state prisons, local jails, correctional residential facilities, and
+military jails.
 
-When first downloaded and read into RStudio, the dataset will include the following variables or columns: 
+When first downloaded and read into RStudio, the dataset will include
+the following variables or columns:
 
-* state -> State postal codes
-* county -> County name
-* FIPS -> 6-digit FIPS code for the county
-* total_population_20 -> Total population of the county in the 2020 Census
-* incarcerated_20 -> Number of incarcerated people in correctional facilities as of the 2020 Census
-* total_population_10 -> Total population of the county in the 2010 Census
-* incarcerated_10 -> Number of incarcerated people in correctional facilities as of the 2010 Census
-* total_population_00 -> Total population of the county in the 2000 Census
-* incarcerated_00 -> Number of incarcerated people in correctional facilities as of the 2000 Census
+-   state -\> State postal codes
+-   county -\> County name
+-   FIPS -\> 6-digit FIPS code for the county
+-   total_population_20 -\> Total population of the county in the 2020
+    Census
+-   incarcerated_20 -\> Number of incarcerated people in correctional
+    facilities as of the 2020 Census
+-   total_population_10 -\> Total population of the county in the 2010
+    Census
+-   incarcerated_10 -\> Number of incarcerated people in correctional
+    facilities as of the 2010 Census
+-   total_population_00 -\> Total population of the county in the 2000
+    Census
+-   incarcerated_00 -\> Number of incarcerated people in correctional
+    facilities as of the 2000 Census
 
-Although these variables are useful on their own, we'll also add some new ones below. This will help us better understand what potential patterns this data is showing us and how the data as a whole fits together. 
+Although these variables are useful on their own, we'll also add some
+new ones below. This will help us better understand what potential
+patterns this data is showing us and how the data as a whole fits
+together.
 
 ```{r}
 
@@ -100,34 +122,88 @@ incarcerated_pop %>%
 
 ```
 
-After exploring the data a bit closer in the codeblock above, some interesting patterns are revealed. Crowley County and West Feliciana Parish, for example, are on every top five list for each year. Also, at least three of the counties in each list are located in the south.
+After exploring the data a bit closer in the codeblock above, some
+interesting patterns emerge. Crowley County and West Feliciana Parish,
+for example, are on every top five list for each year. Also, at least
+three of the counties in each list are located in the south.
 
-It's also a bit alarming how high the incarceration rates are. In 2020, roughly 48% of Crowley County's population was incarcerated. That accounts for almost half of the population. 
+It's also a bit alarming how high the incarceration rates are. In 2020,
+roughly 48% of Crowley County's population was incarcerated. That
+accounts for almost half of the population.
 
-Let's look into Crowley County a bit further. According to the U.S. Census Bureau's quick facts for Crowley County (https://www.census.gov/quickfacts/fact/table/crowleycountycolorado,US/SBO050212), approximately 43.5% of the population is either Black or Hispanic/Latino. In nearby Lincoln County, Black or Hispanic/Latino people make up an even smaller percentage of the population at roughly 20.3%. Based on this alone, it appears that Crowley County is much more diverse than its neighboring counties, and while the Census data may be accurate, it fails to tell a very important story. 
+Let's look into Crowley County a bit further. According to the U.S.
+Census Bureau's quick facts for Crowley County
+(<https://www.census.gov/quickfacts/fact/table/crowleycountycolorado,US/SBO050212>),
+approximately 43.5% of the population is either Black or
+Hispanic/Latino. In nearby Lincoln County, Black or Hispanic/Latino
+people make up an even smaller percentage of the population at roughly
+20.3%. Based on this alone, it appears that Crowley County is much more
+diverse than its neighboring counties, and while the Census data may be
+accurate, it fails to tell a very important story.
 
-The reason why Crowley County's demographics are so diverse is because almost half of it's population is incarcerated. In America, minority communities are disproportionately affected by the criminal justice system and face higher incarceration rates compared to white communities.
+The reason why Crowley County's demographics are so diverse is because
+almost half of it's population is incarcerated. In America, minority
+communities are disproportionately affected by the criminal justice
+system and face higher incarceration rates compared to white
+communities.
 
-> "Black Americans are incarcerated in state prisons across the country at nearly five times the rate of whites, and Latinx people are 1.3 times as likely to be incarcerated than non-Latinx whites." - The Sentencing Project (https://www.sentencingproject.org/publications/color-of-justice-racial-and-ethnic-disparity-in-state-prisons/)
+> "Black Americans are incarcerated in state prisons across the country
+> at nearly five times the rate of whites, and Latinx people are 1.3
+> times as likely to be incarcerated than non-Latinx whites." - The
+> Sentencing Project
+> (<https://www.sentencingproject.org/publications/color-of-justice-racial-and-ethnic-disparity-in-state-prisons/>)
 
-Those incarcerated in Crowley County likely don't live there. This brings us to the deeply troubling topic of prison gerrymandering. Every 10 years, the U.S. Census Bureau conducts the census nationwide to measure changes in population among other important demographic information. When that information is finalized, states and counties begin a process known as redistricting where district/jurisdiction lines are redrawn to be proportional to changes in population. 
+Those incarcerated in Crowley County likely don't live there. This
+brings us to the deeply troubling topic of prison gerrymandering. Every
+10 years, the U.S. Census Bureau conducts the census to measure changes
+in population among other important demographic information. When that
+information is finalized, states and counties begin a process known as
+redistricting where district/jurisdiction lines are redrawn to be
+proportional to changes in population.
 
-The issue lies in the fact that redistricting isn't that simple. Local and state leaders can use Census counts to distort political power and strengthen a particular political power. This alone is known as gerrymandering. Prison gerrymandering, on the other hand, refers to when incarcerated individuals are counted in the states or counties where they are incarcerated instead of where they actually live. This allows state and local leaders to inflate the state or county's population and political power. It also deprives incarcerated people from proper representation and promotes an inaccurate narrative of how connected incarcerated people are to the communities they are being held in.
+The issue lies in the fact that redistricting isn't that simple. Local
+and state leaders can use Census counts to distort political power and
+strengthen a particular political party. This alone is known as
+gerrymandering. Prison gerrymandering, on the other hand, refers to when
+incarcerated individuals are counted in the states or counties where
+they are incarcerated instead of where they actually live. This allows
+state and local leaders to inflate the state or county's population and
+political power. It also deprives incarcerated people from proper
+representation and promotes an inaccurate narrative of how connected
+incarcerated people are to the communities they are being held in.
 
-> Recommended Reading: "When ‘usual residence’ is a prison" by Jonathan Thompson, High Country News (https://www.hcn.org/issues/52.10/when-usual-residence-is-a-prison)
+> Recommended Reading: "When 'usual residence' is a prison" by Jonathan
+> Thompson, High Country News
+> (<https://www.hcn.org/issues/52.10/when-usual-residence-is-a-prison>)
 
-This is a problem that affects this country nationwide. The high incarceration rates we found in other counties in the codeblock above are likely products of prison gerrymandering. Keep this in mind as we continue to navigate through this data and make sense of the patterns that emerge along the way.
+This is a problem that affects this country nationwide. The high
+incarceration rates we found in other counties in the codeblock above
+are likely products of prison gerrymandering. Keep this in mind as we
+continue to navigate through this data and make sense of the patterns
+that emerge along the way.
 
-Now that we have a better understanding of this data, the next codeblock creates data frames for each state. Each state data frame also have new columns that represent statewide data for 2000, 2010, and 2020. Here's a breakdown of those new columns and what they mean: 
+Now that we have a better understanding of this data, the next codeblock
+creates data frames for each state. Each state data frame also have new
+columns that represent statewide data for 2000, 2010, and 2020. Here's a
+breakdown of those new columns and what they mean:
 
-> Important Note: The key below does not include numbers at the end as seen in the codeblock. The full column name would look like this -> total_state_pop_20. The numbers at the end represent either 2000 (00), 2010 (10), or 2020 (20).
+> Important Note: The key below does not include numbers at the end as
+> seen in the codeblock. The full column name would look like this -\>
+> total_state_pop_20. The numbers at the end represent either 2000 (00),
+> 2010 (10), or 2020 (20).
 
-* total_state_pop -> Total population for the state
-* total_incarcerated -> Number of incarcerated people in correctional facilities statewide
-* state_incarceration_rate -> Number of incarcerated people in correctional facilities statewide per 100,000 people (per capita)
-* total_pct_incarcerated -> Total percent of state population incarcerated
+-   total_state_pop -\> Total population for the state
+-   total_incarcerated -\> Number of incarcerated people in correctional
+    facilities statewide
+-   state_incarceration_rate -\> Number of incarcerated people in
+    correctional facilities statewide per 100,000 people (per capita)
+-   total_pct_incarcerated -\> Total percent of state population
+    incarcerated
 
-As you load each data frame, it might look like there are some strange duplicates under the columns listed above. These duplicates are actually OK to keep. I used these figures to build another dataset we will use later.
+As you load each data frame, it might look like there are some strange
+duplicates under the columns listed above. These duplicates are actually
+OK to keep. I used these figures to build another dataset we will use
+later.
 
 ### Creating State Dataframes
 
@@ -852,38 +928,54 @@ maryland <- subset(incarcerated_pop, state == "MD") %>%
 
 ```
 
-Now that all of the state data frames have loaded successfully, let's start taking an even closer look. Using the guiding questions below, you will start to see an interesting pattern emerge.
+Now that all of the state data frames have loaded successfully, let's
+start taking an even closer look. Using the guiding questions below, you
+will start to see an interesting pattern emerge.
 
-First, let's look at incarcerations rates and how they compare over time.
+First, let's look at incarcerations rates and how they compare over
+time.
 
 #### 1. Over time, which 5 states have had the highest incarceration rate per 100,000 people?
 
-In 2020, the states with the highest incarceration rates were: 
-* Louisiana	- 1100 per 100,000 people	
-* West Virginia	- 1096 per 100,000 people		
-* Mississippi	- 1038 per 100,000 people	
-* Oklahoma - 971 per 100,000 people			
-* Arkansas - 899 per 100,000 people
+In 2020, the states with the highest incarceration rates were: \*
+Louisiana - 1100 per 100,000 people\
+\* West Virginia - 1096 per 100,000 people\
+\* Mississippi - 1038 per 100,000 people\
+\* Oklahoma - 971 per 100,000 people\
+\* Arkansas - 899 per 100,000 people
 
-In 2010, the states with the highest incarceration rates were: 
-* Louisiana - 1341 per 100,000 people		
-* Mississippi	- 1155 per 100,000 people			
-* Oklahoma - 1081 per 100,000 people		
-* Georgia - 1073 per 100,000 people			
-* Texas	- 1063 per 100,000 people	
+In 2010, the states with the highest incarceration rates were: \*
+Louisiana - 1341 per 100,000 people\
+\* Mississippi - 1155 per 100,000 people\
+\* Oklahoma - 1081 per 100,000 people\
+\* Georgia - 1073 per 100,000 people\
+\* Texas - 1063 per 100,000 people
 
-In 2000, the states with the highest incarceration rates were: 
-* Louisiana	- 1360 per 100,000 people	
-* Arizona	- 1320 per 100,000 people
-* Texas	-	1282 per 100,000 people
-* Georgia	- 1270 per 100,000 people
-* Mississippi - 1204 per 100,000 people
+In 2000, the states with the highest incarceration rates were: \*
+Louisiana - 1360 per 100,000 people\
+\* Arizona - 1320 per 100,000 people \* Texas - 1282 per 100,000 people
+\* Georgia - 1270 per 100,000 people \* Mississippi - 1204 per 100,000
+people
 
-Each year the Census was taken since 2000, Louisiana and Mississippi have always been in the top five for highest incarceration rates. Louisiana, in particular, has been the state with the highest incarceration rate each Census year. If you toggle between each incarceration rate map, you'll see some noticeable changes in different states. Louisiana, though, is the only state that remains yellow throughout, which indicates a high incarceration rate.
+Each year the Census was taken since 2000, Louisiana and Mississippi
+have always been in the top five for highest incarceration rates.
+Louisiana, in particular, has been the state with the highest
+incarceration rate each Census year. If you toggle between each
+incarceration rate map, you'll see some noticeable changes in different
+states. Louisiana, though, is the only state that remains yellow
+throughout, which indicates a high incarceration rate.
 
-According to our dataset, the United States' average incarceration rate in 2020 was 578 per 100,000 people. Louisiana exceeds the national average with an incarceration rate of 1,100 per 100,000 people. Louisiana is also widely considered the "incarceration capital of the world," according to the Southern Poverty Law Center (https://www.splcactionfund.org/news/2021/02/24/long-road-nowhere-how-southern-states-struggle-long-term-incarceration). 
+According to our dataset, the United States' average incarceration rate
+in 2020 was 578 per 100,000 people. Louisiana exceeds the national
+average with an incarceration rate of 1,100 per 100,000 people.
+Louisiana is also widely considered the "incarceration capital of the
+world," according to the Southern Poverty Law Center
+(<https://www.splcactionfund.org/news/2021/02/24/long-road-nowhere-how-southern-states-struggle-long-term-incarceration>).
 
-Although the incarceration rate in Louisiana has dropped slightly since 2000, the data reveals a very interesting pattern about southern states and their incarceration rates —— southern states seem to have the highest incarcerations rates compared to the rest of the United States. 
+Although the incarceration rate in Louisiana has dropped slightly since
+2000, the data reveals a very interesting pattern about southern states
+and their incarceration rates ------ southern states seem to have the
+highest incarcerations rates compared to the rest of the United States.
 
 ```{r}
 
@@ -943,9 +1035,12 @@ plot_usmap(data = state_incarceration_data, values = "incarceration_rate_00", co
 
 ```
 
-Before moving on to the next section, let's take a moment to process and compare the 2020 incarceration rates for each state one more time.
+Before moving on to the next section, let's take a moment to process and
+compare the 2020 incarceration rates for each state one more time.
 
-Despite Louisiana being considered the "incarceration capital of the world", the incarceration rates of other states aren't too far behind. Pretty alarming, right? 
+Despite Louisiana being considered the "incarceration capital of the
+world", the incarceration rates of other states aren't too far behind.
+Pretty alarming, right?
 
 ```{r}
 
@@ -963,19 +1058,44 @@ state_incarceration_data %>%
     caption = "Source: U.S. Census Bureau")
 
 ```
-Now that we have a better picture of what incarceration rates have looked over time across the United States, let's continue exploring our suspicion that southern states seem to have the highest incarceration rates compared to other U.S. regions. 
 
-For this next question, we're using the regions designated by the Census to compare 2020 incarceration rates across four regions: northeast, midwest, west, and south. 
+Now that we have a better picture of what incarceration rates have
+looked over time across the United States, let's continue exploring our
+suspicion that southern states seem to have the highest incarceration
+rates compared to other U.S. regions.
+
+For this next question, we're using the regions designated by the Census
+to compare 2020 incarceration rates across four regions: northeast,
+midwest, west, and south.
 
 #### 2. Which U.S. region had the highest incarceration rates in 2020?
 
-Based on the maps generated by the code below, it looks like Southern region of the United States has the highest incarceration rates. We can tell by looking at the legends of each map. The maps reveal that southern region is the only U.S. region with incarceration rates over 1,000 per 100,000 residents. Additionally, the south has more states with high incarceration rates compared to other regions.
+Based on the maps generated by the code below, it looks like Southern
+region of the United States has the highest incarceration rates. We can
+tell by looking at the legends of each map. The maps reveal that
+southern region is the only U.S. region with incarceration rates over
+1,000 per 100,000 residents. Additionally, the south has more states
+with high incarceration rates compared to other regions.
 
-> Recommended Reading: "Long Road to Nowhere: How Southern States Struggle with Long-Term Incarceration" by the Southern Poverty Law Center (https://www.splcactionfund.org/news/2021/02/24/long-road-nowhere-how-southern-states-struggle-long-term-incarceration)
+> Recommended Reading: "Long Road to Nowhere: How Southern States
+> Struggle with Long-Term Incarceration" by the Southern Poverty Law
+> Center
+> (<https://www.splcactionfund.org/news/2021/02/24/long-road-nowhere-how-southern-states-struggle-long-term-incarceration>)
 
-It's also important to highlight the southern region's racial demographics. Approximately 19% of the population is Black and 18% of the population is Hispanic/Latino (https://censusreporter.org/profiles/02000US3-south-region/). In 2019, over half, roughly 56% of the United States' Black population lives in the south, according to the Pew Research Center (https://www.pewresearch.org/social-trends/2021/03/25/the-growing-diversity-of-black-america/). 
+It's also important to highlight the southern region's racial
+demographics. Approximately 19% of the population is Black and 18% of
+the population is Hispanic/Latino
+(<https://censusreporter.org/profiles/02000US3-south-region/>). In 2019,
+over half, roughly 56% of the United States' Black population lives in
+the south, according to the Pew Research Center
+(<https://www.pewresearch.org/social-trends/2021/03/25/the-growing-diversity-of-black-america/>).
 
-As we have already established, Black communities are incarcerated at disproportionately higher rates than white communities. Given what we now know about the southern region's racial demographics and incarceration rates, we can see how prison gerrymandering compounds on other systemic, oppressive issues and leads to even greater discrimination against Black communities.
+As we have already established, Black communities are incarcerated at
+disproportionately higher rates than white communities. Given what we
+now know about the southern region's racial demographics and
+incarceration rates, we can see how prison gerrymandering compounds on
+other systemic, oppressive issues and leads to even greater
+discrimination against Black communities.
 
 ```{r}
 
@@ -1016,57 +1136,96 @@ plot_usmap(include = .south_region, data = state_incarceration_data, values = "i
   theme(legend.position = "right", text=element_text(family="Palatino"))
 
 ```
-To answer the following question, we'll use a cleaner version of our initial dataset. This new, county-level dataset no longer has columns for state specific information. Before diving into our continued analysis of this data, we'll add on some new columns to find the net change in incarcerated population counts since 2000.
 
-#### 3. Which were the top five U.S. counties that saw the largest net change in incarcerated population counts since 2000? Alternatively, which were the top five U.S. counties that saw either a decrease or no change in prison population since 2000? 
+To answer the following question, we'll use a cleaner version of our
+initial dataset. This new, county-level dataset no longer has columns
+for state specific information. Before diving into our continued
+analysis of this data, we'll add on some new columns to find the net
+change in incarcerated population counts since 2000.
 
-When toggling through each map, it's really interesting to see how incarcerated populations have changed at a county-level nationwide over time. Between 2000 and 2010, there are fairly significant increases in incarcerated populations, especially in Pinal County, AZ. 
+#### 3. Which were the top five U.S. counties that saw the largest net change in incarcerated population counts since 2000? Alternatively, which were the top five U.S. counties that saw either a decrease or no change in prison population since 2000?
 
-Let's look at Pinal County's most recent incarcerated population data and compare it to state incarcerated population data. Using the "state_incarceration_data" dataframe, we can see that in 2020, Arizona had 64,154 incarcerated people. Now looking at our "arizona" dataframe, we can see that 21,631 people are incarcerated in Pinal County. 
+When toggling through each map, it's really interesting to see how
+incarcerated populations have changed at a county-level nationwide over
+time. Between 2000 and 2010, there are fairly significant increases in
+incarcerated populations, especially in Pinal County, AZ.
 
-About one third or ~33% of the state's incarcerated population is in Pinal County. Arizona Public Media found that about 22,000 incarcerated people are located in the state's eighth district, which is much more than any other legislative district. 
+Let's look at Pinal County's most recent incarcerated population data
+and compare it to state incarcerated population data. Using the
+"state_incarceration_data" dataframe, we can see that in 2020, Arizona
+had 64,154 incarcerated people. Now looking at our "arizona" dataframe,
+we can see that 21,631 people are incarcerated in Pinal County.
 
-We've already established the impact prison gerrymandering can have, but this is additional proof that the populations in some U.S. counties are inflated by incarcerated populations, which strengthens the jurisdiction's political power.
+About one third or \~33% of the state's incarcerated population is in
+Pinal County. Arizona Public Media found that about 22,000 incarcerated
+people are located in the state's eighth district, which is much more
+than any other legislative district.
 
-> Recommended Reading: "Where do the tens of thousands of people in Arizona's prisons fit in redistricting?" by Andrew Oxford, Arizona Public Media (https://news.azpm.org/s/89268-where-do-the-tens-of-thousands-of-people-in-arizonas-prisons-fit-in-redistricting/)
+We've already established the impact prison gerrymandering can have, but
+this is additional proof that the populations in some U.S. counties are
+inflated by incarcerated populations, which strengthens the
+jurisdiction's political power.
 
-Between 2010 and 2020, however, we see less increases and more decreases in incarcerated populations. It's very likely that the COVID-19 pandemic is in large part the reason why the number of incarcerated people across the country decreased so much. 
+> Recommended Reading: "Where do the tens of thousands of people in
+> Arizona's prisons fit in redistricting?" by Andrew Oxford, Arizona
+> Public Media
+> (<https://news.azpm.org/s/89268-where-do-the-tens-of-thousands-of-people-in-arizonas-prisons-fit-in-redistricting/>)
 
-Incarcerated people were infected by the virus at a rate five times higher than the country's national rate, according to a July 2020 research article in the Journal of the American Medical Association (https://jamanetwork.com/journals/jama/fullarticle/2768249). The reported death rate among inmates, which the article reported as 39 deaths per 100,000, is higher than the country's death rate of 29 deaths per 100,000.
+Between 2010 and 2020, however, we see less increases and more decreases
+in incarcerated populations. It's very likely that the COVID-19 pandemic
+is in large part the reason why the number of incarcerated people across
+the country decreased so much.
 
-Of the 3,133 counties in the United States, 376 counties saw no change between 2000 and 2010 and 476 counties saw no change between 2010 and 2020. While there is a lot of overlap between both, it's difficult to say, based solely on this data, why these counties saw no change. The most plausible reason, though, is that there are simply no prisons, jails, detention centers, etc. in those jurisdictions.
+Incarcerated people were infected by the virus at a rate five times
+higher than the country's national rate, according to a July 2020
+research article in the Journal of the American Medical Association
+(<https://jamanetwork.com/journals/jama/fullarticle/2768249>). The
+reported death rate among inmates, which the article reported as 39
+deaths per 100,000, is higher than the country's death rate of 29 deaths
+per 100,000.
+
+Of the 3,133 counties in the United States, 376 counties saw no change
+between 2000 and 2010 and 476 counties saw no change between 2010 and
+2020. While there is a lot of overlap between both, it's difficult to
+say, based solely on this data, why these counties saw no change. The
+most plausible reason, though, is that there are simply no prisons,
+jails, detention centers, etc. in those jurisdictions.
 
 ##### Largest Net Change
 
-###### The top five counties with the largest net change in incarcerated population counts between 2000 and 2010 were: 
-* Pinal County, AZ - 11670		
-* Kern County, CA -	7123		
-* Maricopa County, AZ -	4861		
-* Sacramento County, CA -	4208		
-* Clark County, NV - 3332	
+###### The top five counties with the largest net change in incarcerated population counts between 2000 and 2010 were:
+
+-   Pinal County, AZ - 11670\
+-   Kern County, CA - 7123\
+-   Maricopa County, AZ - 4861\
+-   Sacramento County, CA - 4208\
+-   Clark County, NV - 3332
 
 ###### The top five counties with the largest net change in incarcerated population counts between 2010 and 2020 were:
-* Trousdale County, TN - 2479		
-* Montcalm County, MI -	2397		
-* Centre County, PA -	2240		
-* Fulton County, GA -	2210		
-* Santa Rosa County, FL -	2169	
+
+-   Trousdale County, TN - 2479\
+-   Montcalm County, MI - 2397\
+-   Centre County, PA - 2240\
+-   Fulton County, GA - 2210\
+-   Santa Rosa County, FL - 2169
 
 ##### Smallest Net Change
 
 ###### The top five counties with the smallest net change in incarcerated population counts between 2000 and 2010 were:
-* Hampton city, VA - -8154		
-* Escambia County, FL	-3682		
-* Wayne County, MI	-3643
-* Miami-Dade County, FL	-3557	
-* Baldwin County, GA	-3046	
+
+-   Hampton city, VA - -8154\
+-   Escambia County, FL -3682\
+-   Wayne County, MI -3643
+-   Miami-Dade County, FL -3557\
+-   Baldwin County, GA -3046
 
 ###### The top five counties with the smallest net change in incarcerated population counts between 2010 and 2020 were:
-* Kern County, CA -	-8449		
-* Bronx County, NY - -8261		
-* Los Angeles County, CA - -6616		
-* Cook County, IL -	-5685		
-* Kings County, CA - -5175	
+
+-   Kern County, CA - -8449\
+-   Bronx County, NY - -8261\
+-   Los Angeles County, CA - -6616\
+-   Cook County, IL - -5685\
+-   Kings County, CA - -5175
 
 ```{r}
 
@@ -1135,13 +1294,13 @@ plot_usmap(regions = "counties", data = county_incarceration_data, values = "net
 
 ```
 
-Now, let's look at what percentage makes up the incarcerated population in each state and compare it to figures from 2010 and 2000.
+Now, let's look at what percentage makes up the incarcerated population
+in each state and compare it to figures from 2010 and 2000.
 
-#### 4. For each U.S. state, roughly how much (%) of the state’s adult population was incarcerated/being held in a correctional facility in 2020? Compare it to figures from 2010 and 2000.
+#### 4. For each U.S. state, roughly how much (%) of the state's adult population was incarcerated/being held in a correctional facility in 2020? Compare it to figures from 2010 and 2000.
 
-Using the maps generated in the codeblock below, we can see how much of a state's population is incarcerated.  
-
-
+Using the maps generated in the codeblock below, we can see how much of
+a state's population is incarcerated.
 
 ```{r}
 
@@ -1172,18 +1331,15 @@ plot_usmap(data = state_incarceration_data, values = "pct_incarcerated_20", colo
 
 ```
 
-#### 5. Using ACS data, compare median household incomes and incarceration rates for Colorado, Louisiana, and Arizona in 2020. 
+#### 5. Using ACS data, compare median household incomes and incarceration rates for Colorado, Louisiana, and Arizona in 2020.
 
-For this final question, we're looking at the states — Colorado, Louisiana, and Arizona — where we have found some evidence of prison gerrymandering in previous questions. Using ACS data, we'll extract the county-level median income estimates for each state and compare them to the county-level incarceration rates. 
-
-
-
+For this final question, we're looking at the states --- Colorado,
+Louisiana, and Arizona --- where we have found some evidence of prison
+gerrymandering in previous questions. Using ACS data, we'll extract the
+county-level median income estimates for each state and compare them to
+the county-level incarceration rates.
 
 ```{r}
-
-county_incarceration_data %>%
-  arrange(desc(percent_incarcerated_20)) %>%
-  select(state, county, percent_incarcerated_20)
 
 # load ACS variables
 
@@ -1213,20 +1369,31 @@ arizona_medincome <- get_acs(geography = "county",
 colorado_medincome <- colorado_medincome %>%
   rename(county = NAME) %>%
   rename(fips = GEOID) %>%
-  mutate(county = (str_remove_all(county,", Colorado"))) %>%
-  mutate(fips = str_sub(fips, 3, 5))
+  mutate(county = (str_remove_all(county,", Colorado")))
 
 louisiana_medincome <- louisiana_medincome %>%
   rename(county = NAME) %>%
   rename(fips = GEOID) %>%
-  mutate(county = (str_remove_all(county,", Louisiana"))) %>%
-  mutate(fips = str_sub(fips, 3, 5))
+  mutate(county = (str_remove_all(county,", Louisiana")))
 
 arizona_medincome <- arizona_medincome %>%
   rename(county = NAME) %>%
   rename(fips = GEOID) %>%
-  mutate(county = (str_remove_all(county,", Arizona"))) %>%
-  mutate(fips = str_sub(fips, 3, 5))
+  mutate(county = (str_remove_all(county,", Arizona")))
+
+# load incarceration rates for Colorado, Louisiana, and Arizona
+
+colorado_incarcerations <- county_incarceration_data %>%
+  filter(state == "CO") %>%
+  select(state, county, percent_incarcerated_20)
+
+louisiana_incarcerations <- county_incarceration_data %>%
+  filter(state == "LA") %>%
+  select(state, county, percent_incarcerated_20)
+
+arizona_incarcerations <- county_incarceration_data %>%
+  filter(state == "AZ") %>%
+  select(state, county, percent_incarcerated_20)
 
 # median income maps
 
@@ -1251,26 +1418,12 @@ plot_usmap("counties", include = "AZ", color = "black", data = arizona_medincome
   scale_fill_binned(type = "viridis", name = "Legend", label = scales::comma) + 
   theme(legend.position = "right", text=element_text(family="Palatino"))
 
-# load incarceration rates for Colorado, Louisiana, and Arizona
-
-colorado_incarcerations <- county_incarceration_data %>%
-  filter(state == "CO") %>%
-  select(state, county, percent_incarcerated_20)
-
-louisiana_incarcerations <- county_incarceration_data %>%
-  filter(state == "LA") %>%
-  select(state, county, percent_incarcerated_20)
-
-arizona_incarcerations <- county_incarceration_data %>%
-  filter(state == "AZ") %>%
-  select(state, county, percent_incarcerated_20)
-
 # incarceration rate maps
 
 # colorado
 plot_usmap("counties", include = "CO", color = "black", data = colorado_incarcerations, values = "percent_incarcerated_20") + 
   labs(title = "Title",
-       caption = "Source: U.S. Census Bureau") +
+       caption = "Source: U.S. Census Bureau") + 
   scale_fill_binned(type = "viridis", name = "Legend", label = scales::comma) + 
   theme(legend.position = "right", text=element_text(family="Palatino"))
 
@@ -1292,7 +1445,4 @@ plot_usmap("counties", include = "AZ", color = "black", data = arizona_incarcera
 
 #### Summary
 
-# interactive
-mapview(sf_county_incarceration_data, zcol = "net_change_00_10")
-# turns data frame into a spatial object
-sf_county_incarceration_data <- st_as_sf(county_incarceration_data, coords = c("longitude", "latitude"), crs = 4326) 
+

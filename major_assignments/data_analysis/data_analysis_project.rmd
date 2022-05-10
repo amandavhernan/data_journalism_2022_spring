@@ -18,6 +18,7 @@ library(maps)
 library(mapview)
 library(leaflet)
 library(htmlwidgets)
+library(corrr)
 
 census_api_key("8b69f2765f65670c2183febdffce6afc73c72101", install=TRUE, overwrite=TRUE)
 readRenviron("~/.Renviron")
@@ -840,9 +841,30 @@ Now that all of the state data frames have loaded successfully, let's start taki
 
 First, let's look at incarcerations rates and how they compare to population over time.
 
-#### 1. Over time, which 10 states had the highest incarceration rate per 100,000 people over time? How do the incarceration rates in those states compare to population?
+#### 1. Over time, which 5 states had the highest incarceration rate per 100,000 people?
 
+In 2020, the states with the highest incarceration rates were: 
+* Louisiana				
+* West Virginia				
+* Mississippi			
+* Oklahoma			
+* Arkansas
 
+In 2010, the states with the highest incarceration rates were: 
+* Louisiana			
+* Mississippi			
+* Oklahoma			
+* Georgia			
+* Texas
+
+In 2000, the states with the highest incarceration rates were: 
+* Louisiana			
+* Arizona			
+* Texas			
+* Georgia		
+* Mississippi
+
+Each year the Census was taken since 2000, Louisiana and Mississippi have always been in the top five for highest incarceration rates. Louisiana, in particular, has always been the state with the highest incarceration rate. Although the incarceration rate in Louisiana has dropped slightly since 2000, the data reveals a very interesting pattern about southern states and their incarceration rates — southern states seem to have the highest incarcerations rates compared to the rest of the United States. 
 
 ```{r}
 
@@ -854,7 +876,7 @@ state_incarceration_data <- read_csv("data/state_census_incarceration_data.csv")
 state_incarceration_data %>%
   arrange(desc(incarceration_rate_20)) %>%
   select(state, incarceration_rate_20) %>%
-  head(10)
+  head(5)
 
 plot_usmap(data = state_incarceration_data, values = "incarceration_rate_20", color = "black") + 
   labs(title = "Incarcerations Rates Across the United States in 2020",
@@ -862,18 +884,12 @@ plot_usmap(data = state_incarceration_data, values = "incarceration_rate_20", co
   scale_fill_continuous(
     low = "white", high = "deep sky blue 4", name = "Incarceration Rate", label = scales::comma) + theme(legend.position = "right")
 
-# 2020 - population
-
-plot_usmap(data = state_incarceration_data, values = "total_state_pop_20", color = "black") +
-  scale_fill_continuous(low = "white", high = "deep sky blue 4", name = "Population", label = scales::comma) + theme(legend.position = "right") +
-  scale_x_continuous(expand = c(0, 0)) + scale_y_continuous(expand = c(0, 0))
-
 # 2010 - incarceration rates
 
 state_incarceration_data %>%
   arrange(desc(incarceration_rate_10)) %>%
   select(state, incarceration_rate_10) %>%
-  head(10)
+  head(5)
 
 plot_usmap(data = state_incarceration_data, values = "incarceration_rate_10", color = "black") + 
   labs(title = "Incarcerations Rates Across the United States in 2010",
@@ -881,18 +897,12 @@ plot_usmap(data = state_incarceration_data, values = "incarceration_rate_10", co
   scale_fill_continuous(
     low = "white", high = "deep sky blue 4", name = "Incarceration Rate", label = scales::comma) + theme(legend.position = "right")
 
-# 2010 - population
-
-plot_usmap(data = state_incarceration_data, values = "total_state_pop_10", color = "black") +
-  scale_fill_continuous(low = "white", high = "deep sky blue 4", name = "Population", label = scales::comma) + theme(legend.position = "right") +
-  scale_x_continuous(expand = c(0, 0)) + scale_y_continuous(expand = c(0, 0))
-
 # 2000 - incarceration rates
 
 state_incarceration_data %>%
   arrange(desc(incarceration_rate_00)) %>%
   select(state, incarceration_rate_00) %>%
-  head(10)
+  head(5)
 
 plot_usmap(data = state_incarceration_data, values = "incarceration_rate_10", color = "black") + 
   labs(title = "Incarcerations Rates Across the United States in 2000",
@@ -900,29 +910,17 @@ plot_usmap(data = state_incarceration_data, values = "incarceration_rate_10", co
   scale_fill_continuous(
     low = "white", high = "deep sky blue 4", name = "Incarceration Rate", label = scales::comma) + theme(legend.position = "right")
 
-# 2000 - population
-
-plot_usmap(data = state_incarceration_data, values = "total_state_pop_00", color = "black") +
-  scale_fill_continuous(low = "white", high = "deep sky blue 4", name = "Population", label = scales::comma) + theme(legend.position = "right") +
-  scale_x_continuous(expand = c(0, 0)) + scale_y_continuous(expand = c(0, 0))
-
-
-
-
-
-
-
-sf_state_incarceration_data <- st_as_sf(state_incarceration_data, coords = c("longitude", "latitude"), crs = 4326) 
-
-mapview(sf_state_incarceration_data, zcol = "total_state_pop_00")
-
 ```
 
-Now that we have a better picture of what incarceration rates have looked over time across the United States, let's transition into looking at regions only. For this next part, we're using the regions designated by the Census Bureau.
+Now that we have a better picture of what incarceration rates have looked over time across the United States, let's continue exploring our suspicion that southern states seem to have the highest incarceration rates compared to other U.S. regions. 
+
+For this next question, we're using the regions designated by the Census to compare 2020 incarceration rates across four regions: northeast, midwest, west, and south. 
 
 #### 2. Which U.S. region had the highest incarceration rates in 2020?
 
-Based on the maps generated by the code below, it looks like Southern region of the United States generally has the highest incarceration rates. In 2020, Louisiana and West Virginia had the highest incarceration rates.
+Based on the maps generated by the code below, it looks like Southern region of the United States generally has the highest incarceration rates. We can tell by looking at the legends of each map. The southern region map shows the southern region is the only one with incarceration rates over 1,000 per 100,000 residents.
+
+The western region of the United States comes as a close second with high incarceration rates in the 800s. Next comes the midwest with high incarceration rates in the 700s and last comes the northeast with high incarceration rates in the 600s.
 
 ```{r}
 
@@ -942,15 +940,12 @@ plot_usmap(include = .west_region, data = state_incarceration_data, values = "in
 
 plot_usmap(include = .south_region, data = state_incarceration_data, values = "incarceration_rate_20", color = "black") + scale_fill_continuous(low = "white", high = "deep sky blue 4", name = "Incarceration Rate", label = scales::comma) + theme(legend.position = "right")
 
-southern_incarceration_rates <- state_incarceration_data %>%
-  
-
-
 ```
 
 To answer the following question, we'll use a cleaner version of our initial dataset. This new, county-level dataset also includes latitude and longitude coordinates and no longer has columns for state specific information. Before diving into our continued analysis of this data, we'll add on some new columns to find the net change in incarcerated population counts since 2000.
 
 #### 3. Which were the top 10 U.S. counties that saw the largest net change in population counts since 2000? Alternatively, which were the top 10 U.S. counties that saw either a decrease or no change in prison population since 2010? 
+
 
 
 
@@ -1060,24 +1055,22 @@ plot_usmap(data = incarceration_rates_pct, values = "pct_incarcerated_00", color
 For this final question, we're looking at the five states we found in the very first codeblock where we looked at the counties with the highest percentages of incarcerated population. As a refresher, those states/counties are listed below:
 
 
-CO	Crowley County	48.1256332		
-# PA	Forest County	38.0467518		
-# MS	Issaquena County	36.8460389		
-# LA	West Feliciana Parish	34.5133899		
-# GA	Wheeler County 31.6155802
+* CO	Crowley County	48.1256332		
+* PA	Forest County	38.0467518		
+* MS	Issaquena County	36.8460389		
+* LA	West Feliciana Parish	34.5133899		
+* GA	Wheeler County 31.6155802
+
+Using ACS data, we'll extract the county-level median income estimates for each state and compare them to the county-level incarceration rates. Additionally, we'll use linear regression to explore the relationship between both variables.
 
 
 ```{r}
 
-# highest county incarceration rates
+county_incarceration_data %>%
+  arrange(desc(percent_incarcerated_20)) %>%
+  select(state, county, percent_incarcerated_20)
 
-# CO	Crowley County	48.1256332		
-# PA	Forest County	38.0467518		
-# MS	Issaquena County	36.8460389		
-# LA	West Feliciana Parish	34.5133899		
-# GA	Wheeler County 31.6155802
-
-# load acs variables
+# load ACS variables
 
 acs_variables <- load_variables(year = 2020,
                       dataset = "acs5",
@@ -1090,25 +1083,138 @@ colorado_medincome <- get_acs(geography = "county",
               state = "CO",
               year = 2020)
 
-pennsylvania_medincom <- get_acs(geography = "county",
+pennsylvania_medincome <- get_acs(geography = "county",
               variables = c(medincome = "B19013_001"),
               state = "PA",
               year = 2020)
 
-mississippi_medincom <- get_acs(geography = "county",
+mississippi_medincome <- get_acs(geography = "county",
               variables = c(medincome = "B19013_001"),
               state = "MS",
               year = 2020)
 
-louisiana_acs(geography = "county",
+louisiana_medincome <- get_acs(geography = "county",
               variables = c(medincome = "B19013_001"),
               state = "LA",
               year = 2020)
 
-georgia_acs(geography = "county",
+georgia_medincome <- get_acs(geography = "county",
               variables = c(medincome = "B19013_001"),
               state = "GA",
               year = 2020)
+
+# clean ACS data frames to prepare for mapping and joining
+
+colorado_medincome <- colorado_medincome %>%
+  rename(county = NAME) %>%
+  rename(fips = GEOID) %>%
+  mutate(county = (str_remove_all(county,", Colorado"))) %>%
+  mutate(fips = str_sub(fips, 3, 5))
+ 
+  
+  
+  
+
+
+  
+
+pennsylvania_medincome <- pennsylvania_medincome %>%
+  rename(county = NAME) %>%
+  mutate(county = (str_remove_all(county,", Pennsylvania")))
+
+mississippi_medincome <- mississippi_medincome %>%
+  rename(county = NAME) %>%
+  mutate(county = (str_remove_all(county,", Mississippi")))
+
+louisiana_medincome <- louisiana_medincome %>%
+  rename(county = NAME) %>%
+  mutate(county = (str_remove_all(county,", Louisiana")))
+
+georgia_medincome <- georgia_medincome %>%
+  rename(county = NAME) %>%
+  mutate(county = (str_remove_all(county,", Georgia")))
+  
+# median income maps
+
+
+
+
+
+
+
+
+plot_usmap("counties", include = "CO", color = "black", data = colorado_medincome, values = "estimate") + scale_fill_continuous(
+    low = "white", high = "red", name = "Population (2015)", label = scales::comma
+  ) + theme(legend.position = "right")
+
+
+
+
+plot_usmap(include = c("CO"), regions = "counties", data = colorado_medincome, values = "estimate", color = "black") + labs(title = "Title",
+       subtitle = "Subtitle") +
+  scale_fill_binned(type = "viridis", name = "Net Change", label = scales::comma) + 
+  theme(legend.position = "right")
+
+
+
+
+
+# load incarceration rates for Colorado, Pennsylvania, Mississippi, Louisiana, and Georgia
+
+colorado_incarceration <- county_incarceration_data %>%
+  filter(state == "CO") %>%
+  select(state, county, percent_incarcerated_20)
+
+pennsylvania_incarceration <- county_incarceration_data %>%
+  filter(state == "PA") %>%
+  select(state, county, percent_incarcerated_20)
+
+mississippi_incarceration <- county_incarceration_data %>%
+  filter(state == "MS") %>%
+  select(state, county, percent_incarcerated_20)
+
+louisiana_incarceration <- county_incarceration_data %>%
+  filter(state == "LA") %>%
+  select(state, county, percent_incarcerated_20)
+
+georgia_incarceration <- county_incarceration_data %>%
+  filter(state == "GA") %>%
+  select(state, county, percent_incarcerated_20)
+
+
+
+# join dataframes
+
+  
+joined_wv_mining_ppp <- wv_pop_by_county %>%
+  left_join(wv_mining_ppp, by=c('COUNTY'='project_county_name')) %>%
+  mutate(amount_per_100k = sum_loans/population*100000) %>%
+  arrange(desc(amount_per_100k))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+reveal_data %>%
+  ggplot() +
+  geom_point(aes(x=pct_trump,y=businesses_receiving_ppe_pct)) +
+  geom_smooth(aes(x=pct_trump,y=businesses_receiving_ppe_pct), method="lm")
+
+
+
+
+
+
+
 
 
 

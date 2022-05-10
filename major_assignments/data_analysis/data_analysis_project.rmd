@@ -200,8 +200,8 @@ Here's a breakdown of those new columns and what they mean:
 
 As you load each data frame, it might look like there are some strange
 duplicates under the columns listed above. These duplicates are actually
-OK to keep. I used these figures to build two other data sets we will use
-later.
+OK to keep. I used these figures to build two other data sets we will
+use later.
 
 ### Creating State Data Frames
 
@@ -1349,7 +1349,12 @@ Using the maps generated in the code block below, we can see how much of
 a state's population is incarcerated. Although the percentages are very
 small, they represent tens of thousands of people.
 
-When toggled, the maps show that the prison population across the country decreased slightly in 2020. Louisiana, again, remains almost untouched over time, which confirms our previous findings about the state's high incarceration rates. We can also see how the southern region of the United States appears to have the most incarcerated individuals compared to other regions.
+When toggled, the maps show that the prison population across the
+country decreased slightly in 2020. Louisiana, again, remains almost
+untouched over time, which confirms our previous findings about the
+state's high incarceration rates. We can also see how the southern
+region of the United States appears to have the most incarcerated
+individuals compared to other regions.
 
 ```{r}
 
@@ -1388,7 +1393,11 @@ gerrymandering in previous questions. Using ACS data, we'll extract the
 county-level median income estimates for each state and compare them to
 the county-level incarceration rates.
 
-The maps reveal that counties with the highest incarceration rates tend to have median household incomes ranging from about $50,000-60,000 a year. While this doesn't fully tell us whether these variables are related, it opens up an opportunity for further investigation and analysis. 
+The maps reveal that counties with the highest incarceration rates tend
+to have median household incomes ranging from about \$50,000-60,000 a
+year. While this doesn't fully tell us whether these variables are
+related, it opens up an opportunity for further investigation and
+analysis.
 
 ```{r}
 
@@ -1494,8 +1503,18 @@ plot_usmap("counties", include = "AZ", color = "black", data = arizona_incarcera
 
 #### Summary
 
-Redistricting remains a hot-button issue nationwide as midterm election season nears and it's a powerful process with lasting impacts. Prison gerrymandering, however, which is a product of cruel, oppressive systems in this country, really shows us just how deep discrimination can go. 
+Redistricting remains a hot-button issue nationwide as midterm election
+season nears and it's a powerful process with lasting impacts. Prison
+gerrymandering, however, which is a product of cruel, oppressive systems
+in this country, really shows us just how deep discrimination can go.
 
-Many incarcerated individuals are stripped of their right to vote, which makes it even harder for an already oppressed minority to contribute to politics. 
+Many incarcerated individuals are stripped of their right to vote, which
+makes it even harder for an already oppressed minority to contribute to
+politics.
 
-In its entirety, this notebook aims to educate others on prison gerrymandering and reveal patterns in government data that reinforces the lived experiences of incarcerated individuals. Although this notebook is truly just the tip of the iceberg when it comes to prison gerrymandering, it highlights inequities that would otherwise be hidden without the help of data analysis.
+In its entirety, this notebook aims to educate others on prison
+gerrymandering and reveal patterns in government data that reinforces
+the lived experiences of incarcerated individuals. Although this
+notebook is truly just the tip of the iceberg when it comes to prison
+gerrymandering, it highlights inequities that would otherwise be hidden
+without the help of data analysis.
